@@ -29,21 +29,30 @@
         background: rgba(255, 255, 255, 0.5); 
       }
     </style>
+    <script>
+      // Safe shim for process.env to avoid overwriting injected values
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      if (!window.process.env.NODE_ENV) {
+        window.process.env.NODE_ENV = 'development';
+      }
+    </script>
   <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "@instantdb/react": "https://esm.sh/@instantdb/react@0.17.4?external=react,react-dom",
-    "@instantdb/core": "https://esm.sh/@instantdb/core@0.17.4"
+    "@instantdb/react": "https://aistudiocdn.com/@instantdb/react@^0.22.68"
   }
 }
 </script>
 </head>
   <body class="bg-slate-900 text-white antialiased selection:bg-purple-500 selection:text-white">
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+    
   </body>
 </html>

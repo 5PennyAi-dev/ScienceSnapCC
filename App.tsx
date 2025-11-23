@@ -1,12 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
-import { AppState, ScientificFact, InfographicItem, Language } from './types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AppState, ScientificFact, InfographicItem, Language, AIStudio } from './types';
 import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept } from './services/geminiService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
 import { GalleryGrid } from './components/GalleryGrid';
 import { ImageModal } from './components/ImageModal';
-import { Atom, Microscope, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Globe } from 'lucide-react';
+import { Atom, Microscope, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb } from 'lucide-react';
 import { db } from './db';
 import { tx, id } from "@instantdb/react";
 import { getTranslation } from './translations';
@@ -42,8 +41,10 @@ const App: React.FC = () => {
   });
   
   // Flatten DB data to match InfographicItem[]
-  const gallery: InfographicItem[] = data?.infographics 
-    ? Object.values(data.infographics).map((item: any) => ({
+  const gallery: InfographicItem[] = useMemo(() => {
+    if (!data?.infographics) return [];
+    
+    return Object.values(data.infographics).map((item: any) => ({
         id: item.id,
         timestamp: item.timestamp,
         imageUrl: item.imageUrl,
@@ -53,17 +54,18 @@ const App: React.FC = () => {
             domain: item.domain,
             text: item.text
         }
-    })).sort((a: InfographicItem, b: InfographicItem) => b.timestamp - a.timestamp)
-    : [];
+    })).sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+  }, [data]);
 
   useEffect(() => {
     checkApiKey();
   }, []);
 
   const checkApiKey = async () => {
-    if (window.aistudio) {
+    const aistudio = (window as any).aistudio as AIStudio | undefined;
+    if (aistudio) {
         try {
-            const hasKey = await window.aistudio.hasSelectedApiKey();
+            const hasKey = await aistudio.hasSelectedApiKey();
             setHasApiKey(hasKey);
         } catch (e) {
             console.error("Error checking API key:", e);
@@ -77,9 +79,10 @@ const App: React.FC = () => {
   };
 
   const handleSelectKey = async () => {
-    if (window.aistudio) {
+    const aistudio = (window as any).aistudio as AIStudio | undefined;
+    if (aistudio) {
         try {
-            await window.aistudio.openSelectKey();
+            await aistudio.openSelectKey();
             setHasApiKey(true);
         } catch (e: any) {
             if (e.message && e.message.includes("Requested entity was not found")) {

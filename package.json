@@ -13,8 +13,7 @@
     "react-dom": "^19.2.0",
     "@google/genai": "^1.30.0",
     "lucide-react": "^0.554.0",
-    "@instantdb/react": "0.17.4",
-    "@instantdb/core": "0.17.4"
+    "@instantdb/react": "^0.22.68"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

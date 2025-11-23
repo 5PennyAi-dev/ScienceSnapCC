@@ -1,4 +1,3 @@
-
 export interface ScientificFact {
   domain: string;
   title: string;
@@ -23,3 +22,8 @@ export enum AspectRatio {
 }
 
 export type Language = 'en' | 'fr';
+
+export interface AIStudio {
+  hasSelectedApiKey: () => Promise<boolean>;
+  openSelectKey: () => Promise<void>;
+}

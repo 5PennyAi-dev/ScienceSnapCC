@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScientificFact } from '../types';
 import { Sparkles } from 'lucide-react';

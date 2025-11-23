@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { InfographicItem } from '../types';
 import { ExternalLink } from 'lucide-react';
