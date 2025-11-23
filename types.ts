@@ -1,3 +1,4 @@
+
 export interface ScientificFact {
   domain: string;
   title: string;
@@ -20,3 +21,5 @@ export enum AspectRatio {
   LANDSCAPE = '4:3',
   TALL = '9:16'
 }
+
+export type Language = 'en' | 'fr';

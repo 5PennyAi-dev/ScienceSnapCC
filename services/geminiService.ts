@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ScientificFact } from "../types";
-import { TEXT_MODEL, IMAGE_MODEL, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT } from "../constants";
+import { ScientificFact, Language } from "../types";
+import { TEXT_MODEL, IMAGE_MODEL, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT } from "../constants";
 
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
@@ -8,9 +8,13 @@ const getAiClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export const generateScientificFacts = async (domain: string): Promise<ScientificFact[]> => {
+const getLanguageName = (lang: Language) => lang === 'fr' ? 'French' : 'English';
+
+export const generateScientificFacts = async (domain: string, lang: Language): Promise<ScientificFact[]> => {
   const ai = getAiClient();
-  const prompt = FACT_GENERATION_PROMPT.replace('{{DOMAIN}}', domain);
+  const prompt = FACT_GENERATION_PROMPT
+    .replace('{{DOMAIN}}', domain)
+    .replace('{{LANGUAGE}}', getLanguageName(lang));
 
   try {
     const response = await ai.models.generateContent({
@@ -43,12 +47,48 @@ export const generateScientificFacts = async (domain: string): Promise<Scientifi
   }
 };
 
-export const generateInfographicPlan = async (fact: ScientificFact): Promise<string> => {
+export const generateFactFromConcept = async (concept: string, lang: Language): Promise<ScientificFact> => {
   const ai = getAiClient();
+  const prompt = CONCEPT_EXPLANATION_PROMPT
+    .replace('{{CONCEPT}}', concept)
+    .replace('{{LANGUAGE}}', getLanguageName(lang));
+
+  try {
+    const response = await ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            domain: { type: Type.STRING },
+            title: { type: Type.STRING },
+            text: { type: Type.STRING },
+          },
+          required: ["domain", "title", "text"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No text returned from Gemini");
+    
+    return JSON.parse(text) as ScientificFact;
+  } catch (error) {
+    console.error("Error generating concept fact:", error);
+    throw error;
+  }
+};
+
+export const generateInfographicPlan = async (fact: ScientificFact, lang: Language): Promise<string> => {
+  const ai = getAiClient();
+  // Using global regex replacement instead of replaceAll for compatibility
   const prompt = INFOGRAPHIC_PLAN_PROMPT
     .replace('{{DOMAIN}}', fact.domain)
     .replace('{{TITLE}}', fact.title)
-    .replace('{{TEXT}}', fact.text);
+    .replace('{{TEXT}}', fact.text)
+    .replace(/{{LANGUAGE}}/g, getLanguageName(lang));
 
   try {
     const response = await ai.models.generateContent({

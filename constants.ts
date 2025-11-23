@@ -1,3 +1,4 @@
+
 // Models
 export const TEXT_MODEL = 'gemini-2.5-flash';
 export const IMAGE_MODEL = 'gemini-3-pro-image-preview'; // "Nano Banana Pro" mapping
@@ -21,6 +22,7 @@ The fact and its associated text must be:
 - Suitable for a young audience
 - Captivating and stimulating curiosity
 - Formulated with an enthusiastic and accessible tone
+- **IMPORTANT: WRITTEN IN {{LANGUAGE}}**
 
 #Specifics
 Your explanations must be scientifically accurate and verifiable – this is crucial for the education of our young audience.
@@ -31,6 +33,27 @@ Your contribution is incredibly valuable in inspiring the next generation of sci
 
 #Context
 These scientific facts will be used to create educational infographics for curious students. The goal is to stimulate their interest in science by presenting surprising and memorable information that sparks their curiosity and encourages them to explore further. These infographics will be used in formal and informal educational settings, so they must be both entertaining and rigorously accurate.
+`;
+
+export const CONCEPT_EXPLANATION_PROMPT = `
+#Role
+You are a multilingual scientific expert specialized in scientific outreach for young audiences.
+
+#Task
+The user wants an explanation about a specific concept: "{{CONCEPT}}".
+Your goal is to write a single, rigorous, yet fascinating scientific entry about this concept that can be turned into an infographic.
+
+Provide a JSON object with:
+- "domain": The general scientific domain this concept belongs to.
+- "title": A catchy title (2-4 words).
+- "text": A 250-word explanation.
+
+#Specifics
+- The explanation must be accurate but accessible to students.
+- Use analogies if helpful.
+- Focus on the visual aspects of the concept as it will be illustrated.
+- Avoid technical jargon unless explained.
+- **IMPORTANT: The output content must be strictly in {{LANGUAGE}}.**
 `;
 
 export const INFOGRAPHIC_PLAN_PROMPT = `
@@ -51,6 +74,7 @@ Ensure that the main scientific fact is immediately identifiable and understanda
 Keep it simple to avoid cognitive overload while retaining enough information to be instructive.  
 We are excited to see how you will make this scientific content fascinating for our young audience!  
 Clearly specify the text to display, as it must be rendered accurately. Avoid text repetition.
+**IMPORTANT: The Plan must be written in {{LANGUAGE}}. The text elements to be displayed on the image MUST be in {{LANGUAGE}}.**
 
 ## **Context**
 These infographics will be used in schools to stimulate students' interest in science. They will be displayed in hallways and classrooms, so they must be visible from a distance while inviting closer reading.  

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { InfographicItem } from '../types';
 import { ExternalLink } from 'lucide-react';
@@ -5,13 +6,14 @@ import { ExternalLink } from 'lucide-react';
 interface GalleryGridProps {
   items: InfographicItem[];
   onItemClick: (item: InfographicItem) => void;
+  emptyMessage: string;
 }
 
-export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick }) => {
+export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, emptyMessage }) => {
   if (items.length === 0) {
     return (
       <div className="text-center py-20 text-gray-400">
-        <p>Your gallery is empty. Create some amazing science infographics!</p>
+        <p>{emptyMessage}</p>
       </div>
     );
   }
