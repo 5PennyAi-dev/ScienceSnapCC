@@ -28,6 +28,15 @@
       ::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.5); 
       }
+      
+      /* Utility to hide scrollbar but allow scrolling */
+      .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+      }
+      .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
     </style>
     <script>
       // Safe shim for process.env to avoid overwriting injected values
