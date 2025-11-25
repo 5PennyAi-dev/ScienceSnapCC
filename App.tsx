@@ -14,10 +14,10 @@ import { getTranslation } from './translations';
 import { IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO } from './constants';
 
 const App: React.FC = () => {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('fr');
   const [audience, setAudience] = useState<Audience>('young');
   const [imageModel, setImageModel] = useState<ImageModelType>(IMAGE_MODEL_PRO);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.PORTRAIT);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.LANDSCAPE);
   const [artStyle, setArtStyle] = useState<ArtStyle>('DEFAULT');
   const [appState, setAppState] = useState<AppState>('input');
   
