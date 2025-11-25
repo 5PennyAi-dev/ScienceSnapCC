@@ -273,9 +273,9 @@ const App: React.FC = () => {
 
         console.log('Data to save:', dataToSave);
 
-        // Save metadata to InstantDB using set() instead of update()
-        // set() is more reliable for ensuring data is persisted
-        db.transact(tx.infographics[newItemId].set(dataToSave));
+        // Save metadata to InstantDB
+        // Use .update() with all fields to create the document
+        db.transact(tx.infographics[newItemId].update(dataToSave));
 
         console.log(`✅ Queued save for infographic ${newItemId}`);
 
