@@ -274,8 +274,8 @@ const App: React.FC = () => {
         console.log('Data to save:', dataToSave);
 
         // Save metadata to InstantDB
-        // Use .update() with all fields to create the document
-        db.transact(tx.infographics[newItemId].update(dataToSave));
+        // Use db.tx (not tx) and .update() to create the document
+        db.transact(db.tx.infographics[newItemId].update(dataToSave));
 
         console.log(`✅ Queued save for infographic ${newItemId}`);
 
@@ -764,7 +764,7 @@ const App: React.FC = () => {
             setSelectedGalleryItem(updatedItem);
             
             // Persist update to DB
-            db.transact(tx.infographics[updatedItem.id].update({
+            db.transact(db.tx.infographics[updatedItem.id].update({
                 imageUrl: updatedItem.imageUrl
             }));
         }}
