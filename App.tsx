@@ -254,9 +254,8 @@ const App: React.FC = () => {
         const isUrl = imageUrlToSave.startsWith('http');
         console.log(`Saving to DB. Source: ${isUrl ? 'ImageKit Cloud' : 'Local Base64'}`);
 
-        // Save metadata to InstantDB (fire-and-forget, don't await)
-        // InstantDB handles write queuing automatically and manages retries
-        db.transact(tx.infographics[newItemId].update({
+        // Prepare data object for saving
+        const dataToSave = {
             id: newItemId,
             timestamp: Date.now(),
             title: selectedFact.title,
@@ -270,7 +269,13 @@ const App: React.FC = () => {
             audience: audience,
             modelName: imageModel,
             language: language
-        }));
+        };
+
+        console.log('Data to save:', dataToSave);
+
+        // Save metadata to InstantDB using set() instead of update()
+        // set() is more reliable for ensuring data is persisted
+        db.transact(tx.infographics[newItemId].set(dataToSave));
 
         console.log(`✅ Queued save for infographic ${newItemId}`);
 
@@ -278,7 +283,7 @@ const App: React.FC = () => {
         // This maintains the same UX without timeout errors
         setTimeout(() => {
           setAppState('gallery');
-        }, 300);
+        }, 500);
       } catch (e: any) {
         console.error("Save Operation Failed:", e);
         setError(`${t.errorSave}: ${e.message}`);
