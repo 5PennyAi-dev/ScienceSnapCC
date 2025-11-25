@@ -72,7 +72,9 @@ export const translations = {
     styleWatercolor: "Watercolor",
     styleCyberpunk: "Cyberpunk",
     styleVintage: "Vintage",
-    styleNeon: "Neon"
+    styleNeon: "Neon",
+    btnFullScreen: "Full Screen",
+    exitFullScreen: "Exit Full Screen"
   },
   fr: {
     appTitle: "ScienceSnap",
@@ -144,7 +146,9 @@ export const translations = {
     styleWatercolor: "Aquarelle",
     styleCyberpunk: "Cyberpunk",
     styleVintage: "Vintage",
-    styleNeon: "Néon"
+    styleNeon: "Néon",
+    btnFullScreen: "Plein écran",
+    exitFullScreen: "Quitter plein écran"
   }
 };
 
