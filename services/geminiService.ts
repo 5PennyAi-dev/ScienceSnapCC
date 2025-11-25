@@ -23,6 +23,27 @@ const AUDIENCE_CONFIG = {
   }
 };
 
+// Helper to handle 503 (Overloaded) and 429 (Rate Limit) errors with retries
+const retryWithBackoff = async <T>(operation: () => Promise<T>, retries = 3, initialDelay = 2000): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error: any) {
+    const isTransient = 
+      error.status === 503 || 
+      error.code === 503 || 
+      error.status === 429 || 
+      error.code === 429 || 
+      (error.message && error.message.toLowerCase().includes('overloaded'));
+
+    if (retries > 0 && isTransient) {
+      console.warn(`Gemini API Busy/Overloaded. Retrying in ${initialDelay}ms... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, initialDelay));
+      return retryWithBackoff(operation, retries - 1, initialDelay * 2);
+    }
+    throw error;
+  }
+};
+
 // Helper to inject audience and style settings
 // Uses replacer functions () => string to safely handle special characters in replacement values
 const injectContext = (prompt: string, audience: Audience, style: ArtStyle = 'DEFAULT') => {
@@ -86,7 +107,7 @@ export const generateScientificFacts = async (domain: string, lang: Language, au
   prompt = injectContext(prompt, audience, 'DEFAULT');
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryWithBackoff(() => ai.models.generateContent({
       model: TEXT_MODEL,
       contents: prompt,
       config: {
@@ -104,7 +125,7 @@ export const generateScientificFacts = async (domain: string, lang: Language, au
           }
         }
       }
-    });
+    }));
 
     const text = response.text;
     if (!text) {
@@ -131,7 +152,7 @@ export const generateFactFromConcept = async (concept: string, lang: Language, a
   prompt = injectContext(prompt, audience, 'DEFAULT');
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryWithBackoff(() => ai.models.generateContent({
       model: TEXT_MODEL,
       contents: prompt,
       config: {
@@ -146,7 +167,7 @@ export const generateFactFromConcept = async (concept: string, lang: Language, a
           required: ["domain", "title", "text"]
         }
       }
-    });
+    }));
 
     const text = response.text;
     if (!text) {
@@ -177,10 +198,10 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
   prompt = injectContext(prompt, audience, style);
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryWithBackoff(() => ai.models.generateContent({
       model: TEXT_MODEL,
       contents: prompt,
-    });
+    }));
 
     const text = response.text;
     
@@ -221,11 +242,11 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
   const prompt = `Generate a high-quality educational infographic image based on the following detailed plan:${styleInstruction}\n\n${plan}`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryWithBackoff(() => ai.models.generateContent({
       model: model,
       contents: prompt,
       config: config
-    });
+    }));
 
     // Extract image
     for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -235,10 +256,17 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
       }
     }
     
+    // Check if the model refused to generate the image (e.g. Safety or Recitation)
+    const candidate = response.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+        throw new Error(`Image generation blocked. Reason: ${candidate.finishReason}. The content might be violating safety policies.`);
+    }
+
     // Log text response if it failed to generate image (helps debugging)
-    const textPart = response.candidates?.[0]?.content?.parts?.find(p => p.text);
+    const textPart = candidate?.content?.parts?.find(p => p.text);
     if (textPart) {
       console.warn("Model returned text instead of image:", textPart.text);
+      throw new Error(`Model returned text instead of image: "${textPart.text.substring(0, 100)}..."`);
     }
     
     throw new Error("No image data found in response");
@@ -269,7 +297,7 @@ export const editInfographic = async (imageInput: string, instruction: string, m
         styleInstruction = ` Maintain the ${style} visual style.`;
     }
 
-    const response = await ai.models.generateContent({
+    const response = await retryWithBackoff(() => ai.models.generateContent({
       model: model,
       contents: {
         parts: [
@@ -285,7 +313,7 @@ export const editInfographic = async (imageInput: string, instruction: string, m
         ]
       },
       config: config
-    });
+    }));
 
     for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) {
@@ -293,6 +321,12 @@ export const editInfographic = async (imageInput: string, instruction: string, m
           return `data:${respMime};base64,${part.inlineData.data}`;
         }
       }
+
+    // Check for blocking
+    const candidate = response.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+        throw new Error(`Image editing blocked. Reason: ${candidate.finishReason}`);
+    }
       
     throw new Error("No edited image data found in response");
 

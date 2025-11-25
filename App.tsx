@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle } from './types';
 import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept } from './services/geminiService';
@@ -7,7 +6,7 @@ import { FactCard } from './components/FactCard';
 import { GalleryGrid } from './components/GalleryGrid';
 import { ImageModal } from './components/ImageModal';
 import { StyleSelector } from './components/StyleSelector';
-import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone } from 'lucide-react';
+import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle } from 'lucide-react';
 import { db } from './db';
 import { tx, id } from "@instantdb/react";
 import { getTranslation } from './translations';
@@ -32,6 +31,9 @@ const App: React.FC = () => {
   const [currentPlan, setCurrentPlan] = useState('');
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   
+  // Error State
+  const [error, setError] = useState<string | null>(null);
+
   // Gallery Filter State
   const [filterDomain, setFilterDomain] = useState<string>('All');
   
@@ -119,6 +121,7 @@ const App: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    setError(null);
 
     if (searchMode === 'domain') {
         await handleDomainSubmit();
@@ -135,8 +138,8 @@ const App: React.FC = () => {
       const generatedFacts = await generateScientificFacts(query, language, audience);
       setFacts(generatedFacts);
       setAppState('selection');
-    } catch (error) {
-      alert(`${t.errorGenFacts}`);
+    } catch (err: any) {
+      setError(err.message || t.errorGenFacts);
     } finally {
       setLoading(false);
     }
@@ -150,8 +153,8 @@ const App: React.FC = () => {
       const fact = await generateFactFromConcept(query, language, audience);
       // Skip selection, go straight to processing
       await processFactToInfographic(fact);
-    } catch (error) {
-      alert(`${t.errorGenConcept}`);
+    } catch (err: any) {
+      setError(err.message || t.errorGenConcept);
       setLoading(false);
     }
   };
@@ -164,6 +167,7 @@ const App: React.FC = () => {
     setSelectedFact(fact);
     setAppState('planning');
     setLoading(true);
+    setError(null);
     
     try {
       setLoadingMessage(t.loadingPlanning);
@@ -177,10 +181,16 @@ const App: React.FC = () => {
       setCurrentImage(image);
       setAppState('result');
       
-    } catch (error) {
-       console.error(error);
-       alert(t.errorGenImage);
-       setAppState('input');
+    } catch (err: any) {
+       console.error("Infographic Generation Failed:", err);
+       setError(err.message || t.errorGenImage);
+       
+       // Better error fallback: don't lose context if possible
+       if (facts.length > 0) {
+           setAppState('selection');
+       } else {
+           setAppState('input');
+       }
     } finally {
       setLoading(false);
     }
@@ -214,7 +224,7 @@ const App: React.FC = () => {
         setAppState('gallery');
       } catch (e: any) {
         console.error("Save Operation Failed:", e);
-        alert(`${t.errorSave}: ${e.message}`);
+        setError(`${t.errorSave}: ${e.message}`);
       } finally {
         setLoading(false);
       }
@@ -287,7 +297,23 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-indigo-950 text-white font-inter pb-12">
+    <div className="min-h-screen bg-indigo-950 text-white font-inter pb-12 relative">
+      {/* Error Toast / Banner */}
+      {error && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-slide-down">
+          <div className="bg-red-500/10 backdrop-blur-md border border-red-500/50 text-red-100 p-4 rounded-xl shadow-2xl flex items-start gap-3">
+             <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+             <div className="flex-1">
+                <h3 className="font-bold text-sm text-red-300 mb-1">Error</h3>
+                <p className="text-sm opacity-90">{error}</p>
+             </div>
+             <button onClick={() => setError(null)} className="p-1 hover:bg-red-500/20 rounded-lg transition-colors">
+                <XCircle className="w-5 h-5 text-red-400" />
+             </button>
+          </div>
+        </div>
+      )}
+
       {/* Navigation / Header */}
       <nav className="sticky top-0 z-40 bg-indigo-950/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -304,14 +330,13 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-             {appState !== 'input' && (
-                 <button 
-                    onClick={() => setAppState('gallery')}
-                    className={`p-2 rounded-lg transition-colors ${appState === 'gallery' ? 'bg-white/10 text-white' : 'text-indigo-300 hover:text-white'}`}
-                 >
-                    <Grid3X3 className="w-5 h-5" />
-                 </button>
-             )}
+             <button 
+                onClick={() => setAppState('gallery')}
+                className={`p-2 rounded-lg transition-colors ${appState === 'gallery' ? 'bg-white/10 text-white' : 'text-indigo-300 hover:text-white'}`}
+                title={t.gallery}
+             >
+                <Grid3X3 className="w-5 h-5" />
+             </button>
              <div className="h-6 w-px bg-white/10 mx-1"></div>
              <button 
                 onClick={() => setLanguage(l => l === 'en' ? 'fr' : 'en')}
@@ -389,7 +414,12 @@ const App: React.FC = () => {
                              setAspectRatio(ratios[nextIdx]);
                          }}
                          className="p-2 rounded-lg hover:bg-white/5 text-indigo-300 hover:text-white transition-colors"
-                         title="Change Aspect Ratio"
+                         title={
+                             aspectRatio === AspectRatio.SQUARE ? t.ratioSquare :
+                             aspectRatio === AspectRatio.PORTRAIT ? t.ratioPortrait :
+                             aspectRatio === AspectRatio.LANDSCAPE ? t.ratioLandscape :
+                             t.ratioTall
+                         }
                     >
                         {aspectRatio === AspectRatio.SQUARE && <Square className="w-4 h-4" />}
                         {aspectRatio === AspectRatio.PORTRAIT && <RectangleVertical className="w-4 h-4" />}
