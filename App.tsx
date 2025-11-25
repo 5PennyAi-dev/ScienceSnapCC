@@ -254,8 +254,9 @@ const App: React.FC = () => {
         const isUrl = imageUrlToSave.startsWith('http');
         console.log(`Saving to DB. Source: ${isUrl ? 'ImageKit Cloud' : 'Local Base64'}`);
 
-        // Save metadata to InstantDB - AWAIT the transaction to ensure it completes
-        await db.transact(tx.infographics[newItemId].update({
+        // Save metadata to InstantDB (fire-and-forget, don't await)
+        // InstantDB handles write queuing automatically and manages retries
+        db.transact(tx.infographics[newItemId].update({
             id: newItemId,
             timestamp: Date.now(),
             title: selectedFact.title,
@@ -271,8 +272,13 @@ const App: React.FC = () => {
             language: language
         }));
 
-        console.log(`✅ Successfully saved infographic ${newItemId} to database`);
-        setAppState('gallery');
+        console.log(`✅ Queued save for infographic ${newItemId}`);
+
+        // Small delay ensures transaction is queued before navigation
+        // This maintains the same UX without timeout errors
+        setTimeout(() => {
+          setAppState('gallery');
+        }, 300);
       } catch (e: any) {
         console.error("Save Operation Failed:", e);
         setError(`${t.errorSave}: ${e.message}`);
