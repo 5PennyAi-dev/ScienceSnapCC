@@ -114,6 +114,14 @@ const App: React.FC = () => {
       setGallerySearchQuery('');
   };
 
+  // Monitor gallery query errors
+  useEffect(() => {
+    if (galleryError) {
+      console.error("Gallery query error:", galleryError);
+      setError(`Database error: ${galleryError}`);
+    }
+  }, [galleryError]);
+
   useEffect(() => {
     checkApiKey();
   }, []);
@@ -236,18 +244,18 @@ const App: React.FC = () => {
     if (selectedFact && currentImage && currentPlan) {
       setLoading(true);
       setLoadingMessage(t.loadingSaving);
-      
+
       try {
         const newItemId = id();
-        
+
         // This will try ImageKit, but return Base64 if it fails so we ALWAYS save
         const imageUrlToSave = await uploadImageToStorage(currentImage, `${newItemId}.png`);
-        
+
         const isUrl = imageUrlToSave.startsWith('http');
         console.log(`Saving to DB. Source: ${isUrl ? 'ImageKit Cloud' : 'Local Base64'}`);
 
-        // Save metadata to InstantDB
-        db.transact(tx.infographics[newItemId].update({
+        // Save metadata to InstantDB - AWAIT the transaction to ensure it completes
+        await db.transact(tx.infographics[newItemId].update({
             id: newItemId,
             timestamp: Date.now(),
             title: selectedFact.title,
@@ -262,7 +270,8 @@ const App: React.FC = () => {
             modelName: imageModel,
             language: language
         }));
-        
+
+        console.log(`✅ Successfully saved infographic ${newItemId} to database`);
         setAppState('gallery');
       } catch (e: any) {
         console.error("Save Operation Failed:", e);
@@ -282,30 +291,30 @@ const App: React.FC = () => {
 
   if (isCheckingKey) {
     return (
-      <div className="min-h-screen bg-indigo-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
       </div>
     );
   }
 
   if (!hasApiKey) {
     return (
-      <div className="min-h-screen bg-indigo-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-indigo-900/50 p-8 rounded-3xl border border-white/10 max-w-md">
-            <Key className="w-12 h-12 text-fuchsia-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">API Key Required</h1>
-            <p className="text-indigo-200 mb-6">
-                To use ScienceSnap's premium image generation features (Google Veo/Imagen), 
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-white p-8 rounded-3xl border-4 border-pink-400 max-w-md shadow-2xl">
+            <Key className="w-12 h-12 text-pink-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">API Key Required</h1>
+            <p className="text-gray-600 mb-6">
+                To use ScienceSnap's premium image generation features (Google Veo/Imagen),
                 please select a valid Google Cloud project with billing enabled.
             </p>
-            <button 
+            <button
                 onClick={handleSelectKey}
-                className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 mx-auto"
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 mx-auto"
             >
                 Select API Key
             </button>
-            <p className="mt-4 text-xs text-indigo-400">
-                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-indigo-300">
+            <p className="mt-4 text-xs text-gray-500">
+                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-pink-500">
                     Learn more about billing
                 </a>
             </p>
@@ -317,73 +326,73 @@ const App: React.FC = () => {
   // Loading Overlay
   if (loading) {
     return (
-      <div className="min-h-screen bg-indigo-950 flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
          {/* Background Animation */}
          <div className="absolute inset-0 z-0">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-fuchsia-500/20 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
          </div>
 
          <div className="z-10 flex flex-col items-center text-center p-6">
             <div className="relative mb-8">
-                <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500 to-cyan-500 rounded-full blur-xl opacity-50 animate-spin"></div>
-                <div className="relative bg-indigo-900 p-4 rounded-full border border-white/10">
-                    {appState === 'generating' ? <Sparkles className="w-12 h-12 text-white animate-pulse" /> : <Atom className="w-12 h-12 text-white animate-spin-slow" />}
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-cyan-400 rounded-full blur-xl opacity-60 animate-spin-slow"></div>
+                <div className="relative bg-white p-6 rounded-full border-4 border-pink-400 shadow-xl">
+                    {appState === 'generating' ? <Sparkles className="w-12 h-12 text-pink-500 animate-bounce-light" /> : <Atom className="w-12 h-12 text-pink-500 animate-spin-slow" />}
                 </div>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 font-space">{loadingMessage}</h2>
-            <p className="text-indigo-300">Powered by Gemini 2.5 & 3.0 Pro</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{loadingMessage}</h2>
+            <p className="text-white/70">✨ Science in the making... ✨</p>
          </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-indigo-950 text-white font-inter pb-12 relative">
+    <div className="min-h-screen text-gray-800 pb-12 relative">
       {/* Error Toast / Banner */}
       {error && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-slide-down">
-          <div className="bg-red-500/10 backdrop-blur-md border border-red-500/50 text-red-100 p-4 rounded-xl shadow-2xl flex items-start gap-3">
-             <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="bg-red-100 border-2 border-red-400 text-red-800 p-4 rounded-xl shadow-2xl flex items-start gap-3">
+             <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
              <div className="flex-1">
-                <h3 className="font-bold text-sm text-red-300 mb-1">Error</h3>
-                <p className="text-sm opacity-90">{error}</p>
+                <h3 className="font-bold text-sm text-red-700 mb-1">Error</h3>
+                <p className="text-sm">{error}</p>
              </div>
-             <button onClick={() => setError(null)} className="p-1 hover:bg-red-500/20 rounded-lg transition-colors">
-                <XCircle className="w-5 h-5 text-red-400" />
+             <button onClick={() => setError(null)} className="p-1 hover:bg-red-200 rounded-lg transition-colors">
+                <XCircle className="w-5 h-5 text-red-500" />
              </button>
           </div>
         </div>
       )}
 
       {/* Navigation / Header */}
-      <nav className="sticky top-0 z-40 bg-indigo-950/80 backdrop-blur-md border-b border-white/5">
+      <nav className="sticky top-0 z-40 bg-white shadow-lg border-b-4 border-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div 
-            className="flex items-center gap-2 cursor-pointer group" 
+          <div
+            className="flex items-center gap-2 cursor-pointer group"
             onClick={() => setAppState('input')}
           >
-            <div className="bg-gradient-to-br from-fuchsia-500 to-indigo-600 p-2 rounded-lg group-hover:rotate-12 transition-transform">
+            <div className="bg-gradient-to-br from-pink-500 via-purple-500 to-cyan-400 p-2 rounded-lg group-hover:rotate-12 transition-transform shadow-lg">
                 <Atom className="w-5 h-5 text-white" />
             </div>
-            <span className="font-space font-bold text-xl tracking-tight">
+            <span className="font-bold text-xl tracking-tight text-gray-800">
                 {t.appTitle}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
              {/* Gallery button - Always Visible */}
-             <button 
+             <button
                 onClick={() => setAppState('gallery')}
-                className={`p-2 rounded-lg transition-colors ${appState === 'gallery' ? 'bg-white/10 text-white' : 'text-indigo-300 hover:text-white'}`}
+                className={`p-2 rounded-lg transition-all ${appState === 'gallery' ? 'bg-pink-100 text-pink-600' : 'text-gray-600 hover:text-pink-500'}`}
                 title={t.gallery}
              >
                 <Grid3X3 className="w-5 h-5" />
              </button>
-             <div className="h-6 w-px bg-white/10 mx-1"></div>
-             <button 
+             <div className="h-6 w-px bg-gray-200 mx-1"></div>
+             <button
                 onClick={() => setLanguage(l => l === 'en' ? 'fr' : 'en')}
-                className="text-xs font-bold px-2 py-1 rounded border border-white/10 hover:bg-white/5 transition-colors"
+                className="text-xs font-bold px-3 py-1 rounded-full border-2 border-pink-400 text-pink-600 hover:bg-pink-50 transition-all"
              >
                 {language.toUpperCase()}
              </button>
@@ -399,14 +408,14 @@ const App: React.FC = () => {
             
             {/* Hero Text */}
             <div className="text-center mb-12">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300 text-xs font-bold uppercase tracking-widest mb-6">
-                  <Sparkles className="w-3 h-3" />
-                  AI-Powered Education
+               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 border-2 border-yellow-400 text-yellow-700 text-xs font-bold uppercase tracking-widest mb-6 shadow-md">
+                  <Sparkles className="w-4 h-4" />
+                  🧪 AI-Powered Science 🔬
                </div>
-               <h1 className="text-4xl md:text-6xl font-space font-bold mb-6 leading-tight">
-                  {t.heroTitlePrefix} <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400">{t.heroTitleHighlight}</span> {t.heroTitleMiddle} <span className="text-white">{t.heroTitleSuffix}</span>
+               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500">
+                  {t.heroTitlePrefix} <span>{t.heroTitleHighlight}</span> {t.heroTitleMiddle} <span>{t.heroTitleSuffix}</span>
                </h1>
-               <p className="text-indigo-200 text-lg max-w-2xl mx-auto">
+               <p className="text-gray-700 text-lg max-w-2xl mx-auto font-medium">
                   {t.heroSubtitle}
                </p>
             </div>
@@ -414,17 +423,17 @@ const App: React.FC = () => {
             {/* Controls Toolbar */}
             <div className="flex flex-wrap justify-center gap-3 mb-8">
                 {/* Audience Toggle */}
-                <div className="bg-indigo-900/50 p-1 rounded-xl border border-white/10 flex items-center">
-                    <button 
+                <div className="bg-pink-100 p-1.5 rounded-full border-2 border-pink-300 flex items-center shadow-md">
+                    <button
                         onClick={() => setAudience('young')}
-                        className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${audience === 'young' ? 'bg-indigo-600 text-white shadow-lg' : 'text-indigo-300 hover:text-white'}`}
+                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'young' ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg scale-105' : 'text-pink-700 hover:bg-pink-200'}`}
                     >
                         <Baby className="w-4 h-4" />
                         <span className="hidden sm:inline">{t.audienceKids}</span>
                     </button>
-                    <button 
+                    <button
                         onClick={() => setAudience('adult')}
-                        className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${audience === 'adult' ? 'bg-indigo-600 text-white shadow-lg' : 'text-indigo-300 hover:text-white'}`}
+                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'adult' ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg scale-105' : 'text-pink-700 hover:bg-pink-200'}`}
                     >
                         <GraduationCap className="w-4 h-4" />
                         <span className="hidden sm:inline">{t.audienceAdults}</span>
@@ -432,8 +441,8 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Style Selector */}
-                <div className="bg-indigo-900/50 p-1 rounded-xl border border-white/10 flex items-center">
-                    <StyleSelector 
+                <div className="bg-purple-100 p-1.5 rounded-full border-2 border-purple-300 flex items-center shadow-md">
+                    <StyleSelector
                         selectedStyle={artStyle}
                         onSelect={setArtStyle}
                         labels={t}
@@ -441,22 +450,22 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Model & Ratio Toggles (Compact) */}
-                <div className="bg-indigo-900/50 p-1 rounded-xl border border-white/10 flex items-center gap-1">
-                    <button 
+                <div className="bg-cyan-100 p-1.5 rounded-full border-2 border-cyan-300 flex items-center gap-1 shadow-md">
+                    <button
                         onClick={() => setImageModel(m => m === IMAGE_MODEL_FLASH ? IMAGE_MODEL_PRO : IMAGE_MODEL_FLASH)}
-                        className="p-2 rounded-lg hover:bg-white/5 text-indigo-300 hover:text-white transition-colors"
+                        className="p-2 rounded-full hover:bg-cyan-200 text-cyan-700 transition-all"
                         title={imageModel === IMAGE_MODEL_FLASH ? "Fast Mode" : "Pro Mode (High Quality)"}
                     >
-                        {imageModel === IMAGE_MODEL_FLASH ? <Zap className="w-4 h-4" /> : <Star className="w-4 h-4 text-yellow-400" />}
+                        {imageModel === IMAGE_MODEL_FLASH ? <Zap className="w-4 h-4" /> : <Star className="w-4 h-4 text-yellow-500" />}
                     </button>
-                    <div className="w-px h-4 bg-white/10"></div>
-                    <button 
+                    <div className="w-px h-4 bg-cyan-300"></div>
+                    <button
                          onClick={() => {
                              const ratios = [AspectRatio.SQUARE, AspectRatio.PORTRAIT, AspectRatio.LANDSCAPE, AspectRatio.TALL];
                              const nextIdx = (ratios.indexOf(aspectRatio) + 1) % ratios.length;
                              setAspectRatio(ratios[nextIdx]);
                          }}
-                         className="p-2 rounded-lg hover:bg-white/5 text-indigo-300 hover:text-white transition-colors"
+                         className="p-2 rounded-full hover:bg-cyan-200 text-cyan-700 transition-all"
                          title={
                              aspectRatio === AspectRatio.SQUARE ? t.ratioSquare :
                              aspectRatio === AspectRatio.PORTRAIT ? t.ratioPortrait :
@@ -473,17 +482,17 @@ const App: React.FC = () => {
             </div>
 
             {/* Search Box */}
-            <div className="bg-indigo-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-2 shadow-2xl shadow-indigo-950/50">
-                <div className="flex border-b border-white/5 mb-2">
-                    <button 
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'domain' ? 'bg-white/10 text-white' : 'text-indigo-400 hover:text-white'}`}
+            <div className="bg-white border-4 border-pink-300 rounded-3xl p-3 shadow-xl">
+                <div className="flex border-b-2 border-pink-200 mb-2">
+                    <button
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'domain' ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white' : 'text-gray-600 hover:text-pink-600'}`}
                         onClick={() => setSearchMode('domain')}
                     >
                         <Search className="w-4 h-4" />
                         {t.tabDomain}
                     </button>
-                    <button 
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'concept' ? 'bg-white/10 text-white' : 'text-indigo-400 hover:text-white'}`}
+                    <button
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'concept' ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white' : 'text-gray-600 hover:text-pink-600'}`}
                         onClick={() => setSearchMode('concept')}
                     >
                         <Lightbulb className="w-4 h-4" />
@@ -492,17 +501,17 @@ const App: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="relative">
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={searchMode === 'domain' ? t.placeholderDomain : t.placeholderConcept}
-                        className="w-full bg-transparent text-white text-lg p-4 pl-6 pr-36 focus:outline-none placeholder:text-indigo-500/50"
+                        className="w-full bg-transparent text-gray-800 text-lg p-4 pl-6 pr-40 focus:outline-none placeholder:text-gray-400"
                     />
-                    <button 
+                    <button
                         type="submit"
                         disabled={!query.trim()}
-                        className="absolute right-2 top-2 bottom-2 px-6 bg-white text-indigo-900 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2"
+                        className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg"
                     >
                         {searchMode === 'domain' ? t.btnDiscover : t.btnVisualize}
                         <ArrowRight className="w-4 h-4" />
@@ -511,16 +520,19 @@ const App: React.FC = () => {
             </div>
 
             {/* Quick Start Chips */}
-            <div className="mt-8 flex flex-wrap justify-center gap-2">
-                {['Astrophysics', 'Oceanography', 'Quantum Physics', 'Botany'].map(tag => (
-                    <button 
-                        key={tag}
-                        onClick={() => { setSearchMode('domain'); setQuery(tag); }}
-                        className="px-4 py-2 rounded-full border border-white/5 bg-white/5 text-indigo-300 text-xs font-bold hover:bg-white/10 hover:border-white/20 hover:text-white transition-all"
-                    >
-                        {tag}
-                    </button>
-                ))}
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+                {['Astrophysics', 'Oceanography', 'Quantum Physics', 'Botany'].map((tag, idx) => {
+                    const colors = ['bg-pink-200 border-pink-400 text-pink-700', 'bg-yellow-200 border-yellow-400 text-yellow-700', 'bg-green-200 border-green-400 text-green-700', 'bg-purple-200 border-purple-400 text-purple-700'];
+                    return (
+                        <button
+                            key={tag}
+                            onClick={() => { setSearchMode('domain'); setQuery(tag); }}
+                            className={`px-5 py-2 rounded-full border-2 ${colors[idx]} text-xs font-bold hover:shadow-lg transition-all transform hover:scale-105`}
+                        >
+                            {tag}
+                        </button>
+                    );
+                })}
             </div>
           </div>
         )}
