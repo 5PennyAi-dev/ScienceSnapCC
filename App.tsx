@@ -275,15 +275,10 @@ const App: React.FC = () => {
 
         // Save metadata to InstantDB
         // Use db.tx (not tx) and .update() to create the document
-        db.transact(db.tx.infographics[newItemId].update(dataToSave));
+        await db.transact(db.tx.infographics[newItemId].update(dataToSave));
 
-        console.log(`✅ Queued save for infographic ${newItemId}`);
-
-        // Small delay ensures transaction is queued before navigation
-        // This maintains the same UX without timeout errors
-        setTimeout(() => {
-          setAppState('gallery');
-        }, 500);
+        console.log(`✅ Successfully saved infographic ${newItemId} to database`);
+        setAppState('gallery');
       } catch (e: any) {
         console.error("Save Operation Failed:", e);
         setError(`${t.errorSave}: ${e.message}`);
