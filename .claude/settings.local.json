@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s /b *.tsx *.ts)",
+      "Bash(cat:*)",
+      "Bash(claude plugin:*)",
+      "WebFetch(domain:code.claude.com)",
+      "Bash(claude plugins list:*)",
+      "Bash(while read plugin)",
+      "Bash(do if [ -d ~/.claude/plugins/marketplaces/claude-code-plugins/plugins/\"$plugin\" ])",
+      "Bash(then echo \"- $plugin\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(claude --version:*)",
+      "Bash(dir /B c:Userschris5PennyAIClaudeCodeProjectsVibeCodingScienceSnapCC)",
+      "Bash(findstr:*)",
+      "Skill(frontend-design:frontend-design)",
+      "Bash(dir:*)",
+      "Bash(npm install)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git config:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enabledPlugins": {
+    "commit-commands": true,
+    "feature-dev": true,
+    "frontend-design": true,
+    "plugin-dev": true
+  }
+}

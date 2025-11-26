@@ -528,12 +528,12 @@ const App: React.FC = () => {
             {/* Quick Start Chips */}
             <div className="mt-8 flex flex-wrap justify-center gap-3">
                 {['Astrophysics', 'Oceanography', 'Quantum Physics', 'Botany'].map((tag, idx) => {
-                    const colors = ['bg-pink-200 border-pink-400 text-pink-700', 'bg-yellow-200 border-yellow-400 text-yellow-700', 'bg-green-200 border-green-400 text-green-700', 'bg-purple-200 border-purple-400 text-purple-700'];
+                    const colors = ['bg-pink-400 border-pink-600 text-white', 'bg-yellow-400 border-yellow-600 text-gray-800', 'bg-green-400 border-green-600 text-white', 'bg-purple-400 border-purple-600 text-white'];
                     return (
                         <button
                             key={tag}
                             onClick={() => { setSearchMode('domain'); setQuery(tag); }}
-                            className={`px-5 py-2 rounded-full border-2 ${colors[idx]} text-xs font-bold hover:shadow-lg transition-all transform hover:scale-105`}
+                            className={`px-5 py-2 rounded-full border-2 ${colors[idx]} text-xs font-bold hover:shadow-lg transition-all transform hover:scale-105 hover:animate-bounce-light`}
                         >
                             {tag}
                         </button>
@@ -547,25 +547,25 @@ const App: React.FC = () => {
         {appState === 'selection' && (
             <div className="animate-fade-in">
                 <div className="flex items-center justify-between mb-8">
-                    <button 
+                    <button
                         onClick={() => setAppState('input')}
-                        className="flex items-center gap-2 text-indigo-300 hover:text-white transition-colors font-bold text-sm"
+                        className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors font-bold text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         {t.backToInput}
                     </button>
-                    <h2 className="text-xl font-space font-bold text-white">
-                        {t.discoveriesIn} <span className="text-fuchsia-400">{query}</span>
+                    <h2 className="text-xl font-bold text-gray-800">
+                        {t.discoveriesIn} <span className="text-pink-600">{query}</span>
                     </h2>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6 h-[60vh]">
                     {facts.map((fact, index) => (
-                        <FactCard 
-                            key={index} 
-                            fact={fact} 
-                            index={index} 
-                            onSelect={handleFactSelect} 
+                        <FactCard
+                            key={index}
+                            fact={fact}
+                            index={index}
+                            onSelect={handleFactSelect}
                             labels={{ factLabel: t.factCardLabel, createBtn: t.btnCreateInfographic }}
                         />
                     ))}
@@ -576,27 +576,27 @@ const App: React.FC = () => {
         {/* RESULT STATE */}
         {appState === 'result' && currentImage && selectedFact && (
             <div className="animate-fade-in max-w-5xl mx-auto">
-                 <div className="flex items-center justify-between mb-6">
-                    <button 
+                <div className="flex items-center justify-between mb-6">
+                    <button
                         onClick={() => setAppState('input')}
-                        className="flex items-center gap-2 text-indigo-300 hover:text-white transition-colors font-bold text-sm"
+                        className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors font-bold text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         {t.btnCreateNew}
                     </button>
                     <div className="flex gap-3">
-                         {/* Regenerate Button */}
-                        <button 
+                        {/* Regenerate Button */}
+                        <button
                             onClick={() => handleFactSelect(selectedFact)}
-                            className="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/5 text-sm font-bold flex items-center gap-2"
+                            className="px-4 py-2 rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold flex items-center gap-2 transition-colors"
                         >
-                            <Terminal className="w-4 h-4 text-indigo-400" />
+                            <Terminal className="w-4 h-4 text-purple-500" />
                             {t.btnRegenerate}
                         </button>
                         {/* Save Button */}
-                        <button 
+                        <button
                             onClick={handleSave}
-                            className="px-6 py-2 rounded-xl bg-fuchsia-600 text-white hover:bg-fuchsia-500 shadow-lg shadow-fuchsia-900/20 text-sm font-bold flex items-center gap-2"
+                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg shadow-pink-500/30 text-sm font-bold flex items-center gap-2 transition-all"
                         >
                             <Rocket className="w-4 h-4" />
                             {t.btnSave}
@@ -604,11 +604,11 @@ const App: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8 bg-indigo-900/20 p-6 rounded-3xl border border-white/5">
+                <div className="grid md:grid-cols-2 gap-8 bg-white p-6 rounded-3xl border-2 border-pink-200 shadow-lg">
                     {/* Image Preview */}
-                    <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/50 group">
+                    <div className="relative rounded-2xl overflow-hidden shadow-xl border-4 border-pink-300 bg-gradient-to-br from-gray-50 to-gray-100 group">
                         <img src={currentImage} alt="Generated Infographic" className="w-full h-auto object-contain" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                             <p className="text-white text-xs font-mono opacity-70">Generated by {imageModel}</p>
                         </div>
                     </div>
@@ -616,18 +616,18 @@ const App: React.FC = () => {
                     {/* Info Panel */}
                     <div className="flex flex-col gap-6">
                         <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-fuchsia-400 mb-2">{t.basedOn}</h3>
-                            <div className="bg-indigo-900/40 p-4 rounded-xl border border-white/5">
-                                <h4 className="font-bold text-white mb-1">{selectedFact.title}</h4>
-                                <p className="text-sm text-indigo-200/80 leading-relaxed">{selectedFact.text}</p>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-pink-600 mb-2">{t.basedOn}</h3>
+                            <div className="bg-pink-50 p-4 rounded-xl border-2 border-pink-200">
+                                <h4 className="font-bold text-gray-800 mb-1">{selectedFact.title}</h4>
+                                <p className="text-sm text-gray-700 leading-relaxed">{selectedFact.text}</p>
                             </div>
                         </div>
-                        
+
                         <div className="flex-1">
-                             <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-2">{t.aiPlan}</h3>
-                             <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5 h-64 overflow-y-auto text-xs font-mono text-indigo-300 scrollbar-hide">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 mb-2">{t.aiPlan}</h3>
+                            <div className="bg-purple-50 p-4 rounded-xl border-2 border-purple-200 h-64 overflow-y-auto text-xs font-mono text-purple-800 scrollbar-hide">
                                 {currentPlan}
-                             </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -636,45 +636,45 @@ const App: React.FC = () => {
 
         {/* GALLERY STATE */}
         {appState === 'gallery' && (
-             <div className="animate-fade-in max-w-7xl mx-auto">
-                 {/* Gallery Header */}
-                 <div className="flex flex-col gap-6 mb-8">
-                     <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-4">
-                            <button 
+            <div className="animate-fade-in max-w-7xl mx-auto">
+                {/* Gallery Header */}
+                <div className="flex flex-col gap-6 mb-8">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button
                                 onClick={() => setAppState('input')}
-                                className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                                className="p-2 bg-pink-100 rounded-lg hover:bg-pink-200 transition-colors"
                             >
-                                <ArrowLeft className="w-5 h-5 text-white" />
+                                <ArrowLeft className="w-5 h-5 text-pink-600" />
                             </button>
-                            <h2 className="text-3xl font-space font-bold text-white">{t.galleryTitle}</h2>
-                         </div>
-                     </div>
-                     
-                     {/* Filter Toolbar */}
-                     <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-2 flex flex-col md:flex-row gap-2">
+                            <h2 className="text-3xl font-bold text-gray-800">{t.galleryTitle}</h2>
+                        </div>
+                    </div>
+
+                    {/* Filter Toolbar */}
+                    <div className="bg-white border-2 border-pink-200 rounded-2xl p-3 flex flex-col md:flex-row gap-3 shadow-lg">
                         {/* Search Input */}
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400" />
-                            <input 
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500" />
+                            <input
                                 type="text"
                                 value={gallerySearchQuery}
                                 onChange={(e) => setGallerySearchQuery(e.target.value)}
                                 placeholder={t.searchGalleryPlaceholder}
-                                className="w-full bg-white/5 border border-white/5 rounded-xl py-2 pl-9 pr-4 text-sm text-white focus:outline-none focus:bg-white/10 focus:border-indigo-500/50 transition-all"
+                                className="w-full bg-white border-2 border-pink-200 rounded-xl py-2 pl-9 pr-4 text-sm text-gray-800 focus:outline-none focus:bg-pink-50 focus:border-pink-400 transition-all"
                             />
                         </div>
 
                         {/* Filter Pills */}
                         <div className="flex items-center gap-2 flex-wrap">
-                            <FilterPill 
+                            <FilterPill
                                 label={t.filterLabelDomain}
                                 value={filterDomain}
                                 options={uniqueDomains}
                                 onSelect={setFilterDomain}
                                 allLabel={t.filterAll}
                             />
-                            <FilterPill 
+                            <FilterPill
                                 label={t.filterLabelAudience}
                                 value={filterAudience}
                                 options={[
@@ -684,14 +684,14 @@ const App: React.FC = () => {
                                 onSelect={setFilterAudience}
                                 allLabel={t.filterAll}
                             />
-                            <FilterPill 
+                            <FilterPill
                                 label={t.filterLabelStyle}
                                 value={filterStyle}
                                 options={Object.keys(STYLE_CONFIG)}
                                 onSelect={setFilterStyle}
                                 allLabel={t.filterAll}
                             />
-                            <FilterPill 
+                            <FilterPill
                                 label={t.filterLabelLanguage}
                                 value={filterLanguage}
                                 options={[
@@ -701,47 +701,47 @@ const App: React.FC = () => {
                                 onSelect={setFilterLanguage}
                                 allLabel={t.filterAll}
                             />
-                            
+
                             {hasActiveFilters && (
-                                <button 
+                                <button
                                     onClick={clearFilters}
-                                    className="px-3 py-2 text-xs font-bold text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-1"
+                                    className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1"
                                 >
                                     <X className="w-3 h-3" />
                                     {t.btnResetFilters}
                                 </button>
                             )}
                         </div>
-                     </div>
-                 </div>
+                    </div>
+                </div>
 
                 {isLoadingGallery ? (
                     <div className="flex justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
                     </div>
                 ) : filteredGallery.length > 0 ? (
-                    <GalleryGrid 
-                        items={filteredGallery} 
+                    <GalleryGrid
+                        items={filteredGallery}
                         onItemClick={handleGalleryClick}
                         emptyMessage={t.galleryEmpty}
                     />
                 ) : (
                     /* No Results State */
-                    <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/5">
-                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                            <Filter className="w-8 h-8 text-indigo-400 opacity-50" />
+                    <div className="flex flex-col items-center justify-center py-20 text-center border-4 border-dashed border-pink-300 rounded-3xl bg-pink-50">
+                        <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
+                            <Filter className="w-8 h-8 text-pink-500 opacity-70" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">{t.noResultsTitle}</h3>
-                        <p className="text-indigo-300 max-w-sm">{t.noResultsDesc}</p>
-                        <button 
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{t.noResultsTitle}</h3>
+                        <p className="text-gray-600 max-w-sm">{t.noResultsDesc}</p>
+                        <button
                             onClick={clearFilters}
-                            className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-colors"
+                            className="mt-6 px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-xl text-sm font-bold transition-all"
                         >
                             {t.btnResetFilters}
                         </button>
                     </div>
                 )}
-             </div>
+            </div>
         )}
 
       </main>

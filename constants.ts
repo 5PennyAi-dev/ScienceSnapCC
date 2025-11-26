@@ -15,7 +15,9 @@ export const STYLE_CONFIG: Record<ArtStyle, string> = {
   WATERCOLOR: "Soft watercolor painting, artistic brush strokes, pastel colors, fluid blending, on textured paper background",
   CYBERPUNK: "Futuristic cyberpunk style, neon lights, glowing accents, dark background, high contrast, digital sci-fi look",
   VINTAGE: "Vintage science textbook illustration, lithograph style, muted earth tones, aged paper texture, detailed line work",
-  NEON: "Minimalist neon line art, glowing vector lines on deep black background, high contrast, modern and sleek"
+  NEON: "Minimalist neon line art, glowing vector lines on deep black background, high contrast, modern and sleek",
+  MANGA: "Japanese manga style, bold black outlines, expressive eyes, dynamic action lines, high contrast ink illustrations, dramatic perspectives",
+  GHIBLI: "Studio Ghibli-inspired animation style, soft watercolor tones, whimsical characters, detailed natural backgrounds, warm color palette, magical realism aesthetic"
 };
 
 // Prompts

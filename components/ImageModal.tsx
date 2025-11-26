@@ -99,30 +99,30 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div 
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        <div
+          className="absolute inset-0 bg-white/70 backdrop-blur-lg"
           onClick={onClose}
         ></div>
-        
-        <div className="relative bg-slate-900 border border-white/20 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col md:flex-row overflow-hidden shadow-2xl">
+
+        <div className="relative bg-white border-4 border-gradient rounded-3xl max-w-5xl w-full max-h-[90vh] flex flex-col md:flex-row overflow-hidden shadow-2xl">
           {/* Image Section */}
-          <div className="flex-1 bg-black flex items-center justify-center p-4 relative overflow-y-auto">
+          <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6 relative overflow-y-auto">
                <div className="relative max-w-full max-h-full group">
                   {isEditing && (
                       <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10 rounded-lg">
-                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4"></div>
-                           <p className="text-white font-medium">{labels.applyingMagic}</p>
+                           <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mb-4"></div>
+                           <p className="text-white font-bold">{labels.applyingMagic} ✨</p>
                       </div>
                   )}
-                  <img 
-                      src={item.imageUrl} 
+                  <img
+                      src={item.imageUrl}
                       alt={item.fact.title}
-                      className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-lg"
+                      className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-lg border-2 border-gray-200"
                   />
                   {/* Full Screen Toggle */}
                   <button
                     onClick={() => setIsFullScreen(true)}
-                    className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 border border-white/10"
+                    className="absolute top-4 right-4 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
                     title={labels.btnFullScreen}
                   >
                     <Maximize className="w-5 h-5" />
@@ -131,87 +131,87 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
           </div>
 
           {/* Controls Section */}
-          <div className="w-full md:w-96 p-6 flex flex-col border-l border-white/10 bg-slate-800/50">
+          <div className="w-full md:w-96 p-6 flex flex-col border-l-4 border-pink-300 bg-gradient-to-b from-white to-pink-50">
             <div className="flex justify-between items-center mb-6">
-               <h2 className="text-xl font-bold text-white">{labels.modalDetails}</h2>
-               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                 <X className="w-6 h-6 text-gray-400" />
+               <h2 className="text-2xl font-bold text-gray-800">{labels.modalDetails}</h2>
+               <button onClick={onClose} className="p-2 hover:bg-pink-100 rounded-full transition-colors">
+                 <X className="w-6 h-6 text-pink-600" />
                </button>
             </div>
 
             <div className="mb-6 space-y-4 overflow-y-auto flex-1">
               <div>
-                  <h3 className="text-xs uppercase tracking-wider text-purple-400 font-bold mb-1">{labels.modalDomain}</h3>
-                  <p className="text-white text-sm">{item.fact.domain}</p>
+                  <h3 className="text-xs uppercase tracking-wider text-pink-600 font-bold mb-1">{labels.modalDomain}</h3>
+                  <p className="text-gray-700 text-sm font-medium">{item.fact.domain}</p>
               </div>
               <div>
-                  <h3 className="text-xs uppercase tracking-wider text-purple-400 font-bold mb-1">{labels.modalTitle}</h3>
-                  <p className="text-white text-lg font-bold">{item.fact.title}</p>
+                  <h3 className="text-xs uppercase tracking-wider text-purple-600 font-bold mb-1">{labels.modalTitle}</h3>
+                  <p className="text-gray-800 text-lg font-bold">{item.fact.title}</p>
               </div>
-              
-              {/* Metadata Chips */}
-              <div className="flex flex-wrap gap-2">
+
+              {/* Metadata Chips - Colorful */}
+              <div className="flex flex-wrap gap-2 pt-2">
                   {item.audience && (
-                      <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-indigo-200">
-                          {labels.modalAudience}: {item.audience}
+                      <span className="px-3 py-1 bg-pink-100 border border-pink-400 rounded-full text-xs text-pink-700 font-bold">
+                          👶 {item.audience}
                       </span>
                   )}
                   {item.style && (
-                      <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-indigo-200">
-                          {labels.modalStyle}: {item.style}
+                      <span className="px-3 py-1 bg-purple-100 border border-purple-400 rounded-full text-xs text-purple-700 font-bold">
+                          🎨 {item.style}
                       </span>
                   )}
                   {item.aspectRatio && (
-                      <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-indigo-200">
-                          {labels.modalRatio}: {item.aspectRatio}
+                      <span className="px-3 py-1 bg-cyan-100 border border-cyan-400 rounded-full text-xs text-cyan-700 font-bold">
+                          📐 {item.aspectRatio}
                       </span>
                   )}
                   {item.modelName && (
-                      <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-indigo-200">
-                          {labels.modalModel}: {item.modelName}
+                      <span className="px-3 py-1 bg-yellow-100 border border-yellow-400 rounded-full text-xs text-yellow-700 font-bold">
+                          ⚡ {item.modelName}
                       </span>
                   )}
                   {item.language && (
-                      <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-indigo-200">
-                          {labels.modalLanguage}: {item.language.toUpperCase()}
+                      <span className="px-3 py-1 bg-green-100 border border-green-400 rounded-full text-xs text-green-700 font-bold">
+                          🌍 {item.language.toUpperCase()}
                       </span>
                   )}
               </div>
 
-              <div>
-                  <h3 className="text-xs uppercase tracking-wider text-purple-400 font-bold mb-1">{labels.modalFact}</h3>
-                  <p className="text-gray-300 text-sm leading-relaxed">{item.fact.text}</p>
+              <div className="pt-2">
+                  <h3 className="text-xs uppercase tracking-wider text-purple-600 font-bold mb-2">{labels.modalFact}</h3>
+                  <p className="text-gray-700 text-sm leading-relaxed">{item.fact.text}</p>
               </div>
             </div>
 
-            <div className="mt-auto space-y-4">
-               <div className="p-4 bg-slate-950 rounded-xl border border-white/10">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">{labels.modalEditLabel}</label>
+            <div className="mt-auto space-y-3 pt-4">
+               <div className="p-4 bg-white rounded-2xl border-2 border-pink-300 shadow-md">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">✨ {labels.modalEditLabel}</label>
                   <div className="flex gap-2">
-                      <input 
+                      <input
                           type="text"
                           value={editPrompt}
                           onChange={(e) => setEditPrompt(e.target.value)}
                           placeholder={labels.placeholderEdit}
-                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                          className="flex-1 bg-white border-2 border-pink-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                           onKeyDown={(e) => e.key === 'Enter' && handleEdit()}
                       />
-                      <button 
+                      <button
                           onClick={handleEdit}
                           disabled={isEditing || !editPrompt.trim()}
-                          className="p-2 bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                          className="p-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
                           title="Apply Edit"
                       >
                           {isEditing ? <RefreshCcw className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
                       </button>
                   </div>
-                  {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+                  {error && <p className="text-red-600 text-xs mt-2 font-medium">❌ {error}</p>}
                </div>
 
-              <button 
+              <button
                   onClick={handleDownload}
                   disabled={isDownloading}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-gray-200 transition-colors disabled:opacity-70"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 shadow-md"
               >
                    {isDownloading ? (
                       <>
@@ -235,7 +235,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
         <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center animate-in fade-in duration-200">
            <button
              onClick={() => setIsFullScreen(false)}
-             className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 backdrop-blur-sm"
+             className="absolute top-6 right-6 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full transition-all z-50 shadow-lg"
              title={labels.exitFullScreen}
            >
              <Minimize className="w-6 h-6" />
@@ -243,7 +243,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
            <img
              src={item.imageUrl}
              alt={item.fact.title}
-             className="w-full h-full object-contain p-2"
+             className="w-full h-full object-contain p-4"
            />
         </div>
       )}

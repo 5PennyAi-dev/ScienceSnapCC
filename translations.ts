@@ -81,6 +81,8 @@ export const translations = {
     styleCyberpunk: "Cyberpunk",
     styleVintage: "Vintage",
     styleNeon: "Neon",
+    styleManga: "Manga",
+    styleGhibli: "Ghibli",
     btnFullScreen: "Full Screen",
     exitFullScreen: "Exit Full Screen"
   },
@@ -163,6 +165,8 @@ export const translations = {
     styleCyberpunk: "Cyberpunk",
     styleVintage: "Vintage",
     styleNeon: "Néon",
+    styleManga: "Manga",
+    styleGhibli: "Ghibli",
     btnFullScreen: "Plein écran",
     exitFullScreen: "Quitter plein écran"
   }
