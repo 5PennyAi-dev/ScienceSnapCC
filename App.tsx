@@ -289,6 +289,8 @@ const App: React.FC = () => {
             stepExplanation.title,
             stepExplanation.description,
             keyEventsStr,
+            structure.domain,
+            steps,
             language,
             audience,
             artStyle

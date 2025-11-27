@@ -263,8 +263,42 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
       styleInstruction = `\n\n**IMPORTANT VISUAL STYLE**: The infographic MUST be rendered in the following style: ${STYLE_CONFIG[style]}`;
   }
 
+  // For process sequences, add enhanced guidance for educational text and consistency
+  const isProcessSequence = timeoutMs > 60000; // Process sequences use 120s timeout
+
+  let educationalTextGuidance = "";
+  if (isProcessSequence) {
+    educationalTextGuidance = `
+
+**CRITICAL EDUCATIONAL TEXT REQUIREMENTS (For Young Learners 8-10 years old):**
+This is an educational infographic designed specifically for children. The image MUST include extensive readable text:
+1. STEP BADGE: Clearly display the step number (e.g., "STEP 2/5") - large, visible, typically top-right
+2. TITLE: Make the step title prominent and readable
+3. LABELS (3-5): Clear, readable labels identifying key objects, areas, or components in the scene
+4. EXPLANATIONS (4-5 sentences): Complete sentences (8-12 words each) explaining what's happening, written in simple kid-friendly language
+5. ANNOTATIONS: Text callouts with arrows pointing to important events or transformations
+6. TEXT HIERARCHY: Title (largest) → Explanations (medium, readable from 1 meter away) → Labels (smaller)
+- All text must be clearly visible using a bold, friendly, rounded font suitable for children
+- Avoid scientific jargon - use everyday words that a curious 10-year-old would understand
+- Explain concepts as if teaching to a classroom of elementary school children
+
+**CRITICAL VISUAL CONSISTENCY REQUIREMENTS (For Sequence Coherence):**
+This image is part of a multi-step sequence. Every step must look like it was created by the SAME ARTIST:
+1. COLOR PALETTE: Use EXACTLY the same colors for the same concepts throughout the sequence. Do NOT invent new colors
+2. ILLUSTRATION STYLE: Match the drawing style precisely (same line weights, shading, level of detail, artistic technique)
+3. LAYOUT: Keep the same visual layout structure (step badge position, title placement, annotation style)
+4. VISUAL METAPHORS: If specific visual metaphors or icons were used in previous steps, replicate them exactly
+5. The viewer should see smooth visual continuity - no jarring style changes between steps
+
+**NO DUPLICATE CONTENT (CRITICAL):**
+1. NO DUPLICATE LABELS: Each label in this image must be UNIQUE - do not repeat the same label text twice
+2. NO REDUNDANT TEXT: If something is labeled, don't explain it again elsewhere in the image
+3. EXCLUSIVE CONTENT: Only illustrate what's specific to THIS step - do not repeat content from other steps
+4. ONE LABEL PER ELEMENT: Each visual element gets exactly ONE clear label, not multiple labels saying the same thing`;
+  }
+
   // Explicit instruction to ensure the model behaves as an image generator
-  const prompt = `Generate a high-quality educational infographic image based on the following detailed plan:${styleInstruction}\n\n${plan}`;
+  const prompt = `Generate a high-quality educational infographic image based on the following detailed plan:${styleInstruction}${educationalTextGuidance}\n\n${plan}`;
 
   try {
     console.log(`[Image Generation] Starting with model: ${model}, aspect ratio: ${aspectRatio}, style: ${style}, timeout: ${timeoutMs}ms`);
@@ -516,6 +550,126 @@ export const generateStepExplanation = async (
   }
 };
 
+// Helper to build visual consistency context from completed steps
+// Ensures each step in a sequence maintains consistent visual design
+const buildVisualConsistencyContext = (
+  completedSteps: any[],
+  totalSteps: number,
+  audience: Audience,
+  style: ArtStyle
+): string => {
+  if (completedSteps.length === 0) {
+    // First step - establish the visual foundation
+    const audienceConfig = AUDIENCE_CONFIG[audience];
+    const styleDesc = style !== 'DEFAULT' ? STYLE_CONFIG[style] : audienceConfig.visualStyle;
+
+    return `**VISUAL FOUNDATION (Step 1 - Establish These Conventions):**
+This is the FIRST step in the sequence. You must establish clear and consistent visual conventions that WILL BE ENFORCED in all subsequent steps:
+
+**1. TITLE TEXT DESIGN** (CRITICAL - Must be identical across ALL steps):
+Define the EXACT visual design for the step title at the top of the image:
+  * Font style: (e.g., bold sans-serif, rounded, playful)
+  * Font size: (e.g., 48px, large)
+  * Text color: (specific hex code, e.g., #2D3748)
+  * Background: (if any - color, opacity, shape behind title)
+  * Position: (e.g., top-center, 30px from top edge)
+  * Text effects: (shadow, outline, etc.)
+  This title design MUST remain EXACTLY THE SAME in all subsequent steps - only the title text changes!
+
+**2. STEP INDICATOR BADGE DESIGN** (CRITICAL - Must be identical across ALL steps):
+Define the EXACT visual design for the step indicator badge (e.g., "STEP 1/5"):
+  * Shape: (e.g., rounded rectangle, shield, circle, hexagon)
+  * Background color: (specific hex code or color name)
+  * Border style: (thickness, color, rounded corners radius)
+  * Text style: (font weight, size, color)
+  * Position: (e.g., top-right corner, 20px from edges)
+  * Size: (width x height in pixels or approximate size)
+  This step indicator design MUST remain EXACTLY THE SAME in all subsequent steps - only the number changes!
+
+**3. COLOR PALETTE**: Select 3-5 core colors and specify what each represents (e.g., "water = cyan blue #0088CC", "sunlight = golden yellow #FFD700")
+
+**4. ILLUSTRATION STYLE**: Specify line weight, shading technique, level of detail, overall artistic approach
+
+**5. LAYOUT CONVENTIONS**: Where the title goes, where the step badge appears, how annotations and callouts are positioned
+
+**6. TEXT STYLES FOR LABELS & EXPLANATIONS**: Font style, text size hierarchy, how labels and explanations are formatted
+
+- Overall style: ${styleDesc}
+
+DOCUMENT ALL these choices clearly in the visual plan. They MUST be exactly replicated in all subsequent steps.`;
+  }
+
+  // Subsequent steps - maintain consistency with Step 1
+  // CRITICAL: Inject the COMPLETE Step 1 plan so Gemini can read and copy exact specifications
+  const firstStepPlan = completedSteps[0].plan || "";
+
+  return `**VISUAL CONSISTENCY CONTEXT (ENFORCE These Conventions from Step 1):**
+
+You are generating Step ${completedSteps.length + 1} of ${totalSteps} in an existing sequence.
+
+**CRITICAL: Below is the COMPLETE visual plan from Step 1. You MUST read it carefully and EXACTLY replicate all visual design decisions:**
+
+<STEP_1_VISUAL_PLAN>
+${firstStepPlan}
+</STEP_1_VISUAL_PLAN>
+
+**EXTRACT FROM THE STEP 1 PLAN ABOVE AND REPLICATE EXACTLY:**
+
+**1. TITLE TEXT (Copy EXACTLY from Step 1 plan above):**
+- Find the title text specifications in the Step 1 plan (font style, font size, text color, background, position, effects)
+- Use the EXACT SAME font style, font size (e.g., 48px), text color (hex code), background treatment, and position
+- ONLY change the actual title text content - all styling must be IDENTICAL to Step 1
+- The title must be VISUALLY IDENTICAL in style to Step 1's title
+
+**2. STEP INDICATOR BADGE (Copy EXACTLY from Step 1 plan above):**
+- Find the badge specifications in the Step 1 plan (shape, colors, border, text style, position, size)
+- Use the EXACT SAME shape, background color (hex code), border style, text color, position, and size
+- ONLY change the number from "1" to "${completedSteps.length + 1}"
+- DO NOT invent new colors or styles - copy exactly what Step 1 defined
+- The badge must be VISUALLY IDENTICAL to Step 1's badge
+
+**3. COLOR PALETTE (Copy EXACTLY from Step 1 plan above):**
+- Find all hex color codes defined in Step 1's plan
+- Use EXACTLY those same colors for the same concepts
+- DO NOT create new colors - use the palette from Step 1
+- Map: [Concept] → [Exact hex color from Step 1]
+
+**4. ILLUSTRATION STYLE (Match EXACTLY from Step 1 plan above):**
+- Copy the illustration technique, line weight, shading approach
+- Match the level of detail and artistic style precisely
+- Keep consistent character/object proportions
+
+**5. LAYOUT TEMPLATE (Replicate from Step 1 plan above):**
+- Title placement: same position as Step 1
+- Step badge position: same corner and distance from edges
+- Annotation style: same arrow types, callout boxes
+- Content area: same composition and boundaries
+
+**6. TEXT STYLES FOR LABELS & EXPLANATIONS (Copy from Step 1):**
+- Use the same font styles for labels and explanatory text
+- Maintain the same text hierarchy (sizes, colors, formatting)
+
+**Previous Steps Summary:**
+${completedSteps.map((step, idx) => `- Step ${idx + 1}: "${step.title}"`).join('\n')}
+
+**CONTENT ALREADY COVERED (DO NOT REPEAT):**
+The following content was already illustrated in previous steps. DO NOT include this content again in Step ${completedSteps.length + 1}:
+${completedSteps.map((step, idx) => `- Step ${idx + 1} covered: "${step.title}" - ${step.description ? step.description.substring(0, 150) + '...' : 'N/A'}`).join('\n')}
+
+**CONTENT EXCLUSION RULES:**
+- DO NOT illustrate events or concepts from the list above - they were already shown
+- DO NOT repeat labels, annotations, or explanations from previous steps
+- Show ONLY new content specific to Step ${completedSteps.length + 1}
+- If an element must appear again (continuity), show it in its NEW state, not repeat the old explanation
+
+**NO DUPLICATE LABELS IN THIS IMAGE:**
+- Each label in this image must be UNIQUE - do not use the same label text twice
+- Each visual element gets ONE label, not multiple
+- Avoid redundant text - don't explain the same thing in multiple places
+
+**CRITICAL:** The viewer must see ZERO visual discontinuity. This step MUST look like it was created by the SAME ARTIST using the EXACT SAME template as Step 1. Read the Step 1 plan above and copy every visual specification precisely.`;
+};
+
 export const generateStepInfographicPlan = async (
   processName: string,
   stepNumber: number,
@@ -523,11 +677,17 @@ export const generateStepInfographicPlan = async (
   stepTitle: string,
   stepDescription: string,
   keyEventsStr: string,
+  domain: string,
+  completedSteps: any[],
   lang: Language,
   audience: Audience,
   style: ArtStyle
 ): Promise<string> => {
   const ai = getAiClient();
+
+  // Build visual consistency context based on previous steps
+  const visualConsistencyContext = buildVisualConsistencyContext(completedSteps, totalSteps, audience, style);
+
   let prompt = PROCESS_STEP_PLAN_PROMPT
     .replace(/{{PROCESS_NAME}}/g, () => processName)
     .replace(/{{STEP_NUMBER}}/g, () => stepNumber.toString())
@@ -535,6 +695,8 @@ export const generateStepInfographicPlan = async (
     .replace(/{{STEP_TITLE}}/g, () => stepTitle)
     .replace(/{{STEP_DESCRIPTION}}/g, () => stepDescription)
     .replace(/{{KEY_EVENTS}}/g, () => keyEventsStr)
+    .replace(/{{DOMAIN}}/g, () => domain)
+    .replace(/{{VISUAL_CONSISTENCY_CONTEXT}}/g, () => visualConsistencyContext)
     .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
 
   prompt = injectContext(prompt, audience, style);

@@ -123,13 +123,17 @@ Your goal is to determine the optimal way to explain this process through a sequ
 - Steps should have clear causal relationships and logical flow
 - Each step should represent a distinct phase or transformation in the process
 - Titles should be action-oriented and describe what happens at that step
-- Avoid creating redundant or overlapping steps
+- **CRITICAL: Create MUTUALLY EXCLUSIVE steps** - each step must cover DIFFERENT content:
+  * NO overlapping information between steps
+  * NO repeating the same concepts, objects, or events across multiple steps
+  * Each step should have its OWN unique focus, actors, and transformations
+  * Think of steps as chapters in a book - each covers a distinct part of the story
 - Consider the attention span and learning capacity of {{TARGET_AUDIENCE}}
 - Adopt a {{TONE}} tone in your descriptions
 - **IMPORTANT: All output content (processName, domain, overviewText, stepTitles) must be strictly in {{LANGUAGE}}.**
 
 #Context
-These steps will be used to create an educational infographic sequence where each step is visualized and explained separately. The goal is to help learners understand complex processes through progressive, visual storytelling.
+These steps will be used to create an educational infographic sequence where each step is visualized and explained separately. Each infographic will ONLY show what happens in that specific step - NO overlap between images. The goal is to help learners understand complex processes through progressive, visual storytelling.
 `;
 
 export const PROCESS_STEP_EXPLANATION_PROMPT = `
@@ -156,15 +160,20 @@ Return a JSON object with:
 - Set up what comes next (how this step enables the following step)
 - Explain the WHY and HOW, not just the WHAT
 - Use analogies appropriate for {{TARGET_AUDIENCE}} to make concepts concrete
-- Avoid repeating information from previous steps
+- **CRITICAL: NO CONTENT OVERLAP** - This step's content must be DISTINCT from all other steps:
+  * DO NOT repeat information, concepts, or events already covered in previous steps
+  * DO NOT describe events that belong to future steps
+  * Focus EXCLUSIVELY on what happens in THIS specific step's timeframe
+  * If something was explained in a previous step, do NOT explain it again - just briefly reference it
 - Break down complex mechanisms into understandable components
 - The description must be scientifically accurate yet accessible
 - Adopt a {{TONE}} tone
 - keyEvents should be short phrases suitable for highlighting in an infographic
+- **keyEvents must be UNIQUE to this step** - do not repeat events from other steps
 - **IMPORTANT: All output content must be strictly in {{LANGUAGE}}.**
 
 #Context
-This explanation will be used to create a visual infographic for this specific step. The keyEvents will help designers emphasize the most important transformations or phenomena to highlight visually.
+This explanation will be used to create a visual infographic for this specific step ONLY. The infographic will show ONLY this step's content - nothing from other steps. The keyEvents will help designers emphasize the most important transformations or phenomena to highlight visually.
 `;
 
 export const PROCESS_STEP_PLAN_PROMPT = `
@@ -173,6 +182,10 @@ Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}} in the
 
 This is part of a sequence, so maintain visual consistency with the overall process narrative.
 
+{{VISUAL_CONSISTENCY_CONTEXT}}
+
+**CRITICAL REQUIREMENTS FOR THIS STEP:**
+
 Step Details:
 - Title: {{STEP_TITLE}}
 - Description: {{STEP_DESCRIPTION}}
@@ -180,26 +193,139 @@ Step Details:
 
 Following these guidelines:
 
-1. **Emphasize the Step Number**: Clearly display "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" so viewers understand the sequence position
-2. **Show the Transformation**: Visually represent what changes or transforms during this specific step
-3. **Maintain Continuity**: Use consistent visual language with other steps (colors, metaphors, style)
-4. **Highlight Key Events**: Emphasize the 2-3 key events that define this step
-5. **Show Inputs and Outputs**: If applicable, show what enters this step and what is produced
-6. **Use Visual Metaphors**: Employ diagrams, arrows, icons, or metaphors suitable for {{TARGET_AUDIENCE}}
-7. **Create Focal Points**: Guide the viewer's eye to the most important transformation happening in this step
-8. **Balance Information**: Include enough detail to be educational without creating visual clutter
+1. **Emphasize Educational Text Content** (CRITICAL for young learners):
+   - **STEP TITLE TEXT**: Display the step title prominently at the top with a consistent, recognizable design:
+     * Use a specific font style (e.g., bold sans-serif, rounded, playful)
+     * Apply a specific font size (e.g., 48px or large)
+     * Use a specific text color (hex code, e.g., #2D3748)
+     * Add background treatment if desired (color, opacity, shape behind title)
+     * Position it consistently (e.g., top-center, 30px from top edge)
+     * Add text effects if desired (shadow, outline, etc.)
+     * This title design MUST remain EXACTLY THE SAME across all steps - only the title text changes!
+   - **STEP INDICATOR BADGE**: Display "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" badge with a consistent, recognizable design:
+     * Use a clearly defined shape (e.g., rounded rectangle, shield, circle, hexagon - pick ONE and use it for all steps)
+     * Apply a distinct background color that stands out from the scene
+     * Add a visible border/outline
+     * Use large, bold, easy-to-read text
+     * Position it consistently (e.g., top-right corner, 20px from edges)
+     * Size it to be prominent but not overwhelming
+     * This design MUST remain EXACTLY THE SAME across all steps in the sequence - only the number changes!
+   - Add 3-5 TEXT LABELS that identify key components, objects, or areas in the scene
+   - Include 4-5 SHORT EXPLANATORY SENTENCES (8-12 words each) that describe what's happening
+   - Add ANNOTATIONS with arrows pointing to important elements
+   - Use CALLOUT BOXES to highlight the 2-3 key events
+   - All text must be large enough for 8-10 year olds to read easily
+   - Text should answer: "What is this?", "What's happening here?", and "Why is this important?"
+
+2. **Maintain Visual Consistency with Previous Steps** (CRITICAL for sequence coherence):
+   - Use the EXACT same color palette established in previous steps (specify which colors represent which concepts)
+   - Maintain the same illustration technique and level of detail
+   - Use consistent visual metaphors (if water was blue with wave patterns in Step 1, use the same style here)
+   - Keep the same layout structure (title position, badge placement, annotation style)
+   - Ensure the art style matches previous steps exactly (same line weight, shading, texture)
+   - Reference specific design choices from previous steps to maintain continuity
+
+3. **Show the Transformation**: Visually represent what changes or transforms during this specific step (before/after comparison if helpful)
+
+4. **Highlight Key Events**: Use visual emphasis (colored boxes, circles, arrows) for the 2-3 key events
+
+5. **Show Inputs and Outputs**: If applicable, clearly label what enters this step and what is produced
+
+6. **Create Focal Points**: Guide the viewer's eye to the most important transformation with size, color, or position
+
+7. **Balance Information**: Include enough educational text to be instructive without creating visual clutter
 
 ## **Specifics**
+
+**TEXT CONTENT REQUIREMENTS** (Critical for Educational Value):
+- The infographic MUST contain visible, readable text elements including:
+  * Step title and step number badge
+  * 3-5 labels identifying key objects or areas
+  * 4-5 complete explanatory sentences (not just titles - actual kid-friendly explanations)
+  * Callouts or annotations for the key events
+- Text hierarchy: Title (largest) → Explanatory sentences (medium) → Labels (smaller)
+- All text must be in simple language appropriate for 8-10 year olds
+- Avoid scientific jargon unless it's explained in the annotation
+
+**NO DUPLICATE CONTENT** (CRITICAL - Avoid Repetition):
+- **Within this image**: Each label, annotation, and text element must be UNIQUE
+  * DO NOT repeat the same label twice in the image
+  * DO NOT show the same information in both a label AND an explanation
+  * Each visual element should have ONE clear label, not multiple
+  * Avoid redundant text - if something is labeled, don't repeat it elsewhere
+- **Across the sequence**: This step's content must be EXCLUSIVE to this step
+  * DO NOT illustrate events or concepts that belong to OTHER steps
+  * DO NOT repeat content from previous steps - it was already shown
+  * DO NOT preview content from future steps - it will be shown later
+  * Focus ONLY on what happens in THIS specific step's timeframe
+  * If an element appeared in a previous step, show its NEW state, not repeat the old state
+
+**TITLE TEXT REQUIREMENTS** (CRITICAL for Sequence Consistency):
+- The step title at the top of the image MUST be designed with a specific, consistent visual template that will be used for ALL steps:
+  * For Step 1: Define the exact font style, font size, text color (hex code), background treatment, position, and any text effects
+  * For Steps 2+: Replicate this design EXACTLY - same font, size, color, background, position, effects. Only the title text changes.
+- Examples of consistent title designs:
+  * Option A: Bold sans-serif, 48px, dark blue (#2D3748), no background, top-center, subtle shadow
+  * Option B: Rounded playful font, 52px, white text on semi-transparent dark banner, top-center
+  * Option C: Bold uppercase, 44px, golden yellow (#FFD700), slight black outline, top-center
+- Specify your chosen design precisely in the visual plan so that all subsequent steps can replicate it exactly
+- The title style should be instantly recognizable across all steps as part of the same series
+
+**STEP INDICATOR BADGE REQUIREMENTS** (CRITICAL for Sequence Consistency):
+- The "STEP X/Y" badge MUST be designed with a specific, consistent visual template that will be used for ALL steps:
+  * For Step 1: Define the exact shape, colors, border, text styling, position, and size
+  * For Steps 2+: Replicate this design EXACTLY - same shape, colors, border, text styling, position, size. Only the number changes.
+- Examples of consistent badge designs:
+  * Option A: Rounded rectangle (light cream background, dark blue text, thin border, top-right corner)
+  * Option B: Shield shape (orange background, white text, thick border, top-right corner)
+  * Option C: Circle (light blue background, dark text, no border, top-right corner)
+- Specify your chosen design precisely in the visual plan so that all subsequent steps can replicate it exactly
+- The badge should be instantly recognizable across all steps as part of the same series
+
+**VISUAL CONSISTENCY REQUIREMENTS** (Critical for Sequence Coherence):
+- Color Palette: Define and maintain 3-5 core colors throughout the sequence:
+  * Primary concept color (e.g., "oxygen = bright red")
+  * Secondary concept color (e.g., "carbon dioxide = blue-green")
+  * Background/environment color
+  * Accent color for emphasis
+- Visual Style: Maintain consistent:
+  * Line weight and stroke style
+  * Character/object proportions if characters are present
+  * Shading and lighting direction
+  * Background texture or pattern
+  * Icon and symbol design language
+- Layout Template: Keep consistent positioning for:
+  * Step badge location (suggest: top-right corner)
+  * Title placement (suggest: top-center)
+  * Main content area boundaries
+  * Annotation/callout positioning style
+- **TITLE TEXT TEMPLATE** (Critical for Series Consistency):
+  * Font style: Define ONE font style for ALL step titles (e.g., bold sans-serif, rounded playful)
+  * Font size: ONE consistent size for all titles (e.g., 48px)
+  * Text color: ONE consistent color (hex code) for all titles
+  * Background: ONE consistent treatment for all titles (none, banner, shadow, etc.)
+  * Position: EXACT same position for all titles (e.g., top-center, 30px from top)
+  * Effects: Same text effects for all titles (shadow, outline, etc.)
+  * ONLY the title text content changes - everything else is identical
+- **STEP INDICATOR BADGE TEMPLATE** (Critical for Series Consistency):
+  * Shape: Define ONE shape and use it for ALL steps (e.g., rounded rectangle, shield, circle)
+  * Background color: ONE consistent color for all step badges
+  * Border/outline: ONE consistent border style for all step badges
+  * Text color and font: Must be identical across all steps
+  * Position: EXACT same position for all steps (same corner, same distance from edges)
+  * Size: EXACT same dimensions for all steps
+  * ONLY the step number changes (STEP 1/5, STEP 2/5, etc.) - everything else is identical
+
 Your plan must be detailed enough for an AI image generator to create a compelling visual representation. Be specific about:
 - Layout and composition (where elements should be positioned)
-- Color coding (if using colors to distinguish components or processes)
+- Color coding with specific hex values or names (consistency across steps is essential)
 - Key visual elements (arrows showing flow, icons representing concepts, diagrams)
 - Text placement and sizing hierarchy
 - Any step-specific indicators or badges
 - The {{VISUAL_STYLE}} style should be applied consistently throughout the sequence
 
 ## **Context**
-These infographics will be viewed in sequence, so each image should feel like part of a coherent narrative. The viewer should be able to see at a glance where they are in the process and what is transforming at this stage.
+These infographics will be viewed in sequence, so each image should feel like part of a coherent narrative. The viewer should be able to see at a glance where they are in the process and what is transforming at this stage. The target audience is young learners (8-10 years old), so text must be abundant, clear, and educational.
 
 ### **Required Elements:**
 - Process: {{PROCESS_NAME}}
