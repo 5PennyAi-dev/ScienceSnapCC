@@ -84,7 +84,16 @@ export const translations = {
     styleManga: "Manga",
     styleGhibli: "Ghibli",
     btnFullScreen: "Full Screen",
-    exitFullScreen: "Exit Full Screen"
+    exitFullScreen: "Exit Full Screen",
+    tabProcess: "Process/Sequence",
+    placeholderProcess: "E.g., Photosynthesis, Water Cycle, Butterfly Lifecycle...",
+    loadingDiscoveringProcess: "Analyzing process structure...",
+    loadingGeneratingStep: "Generating step",
+    loadingPlanningStep: "Planning visual for step",
+    loadingRenderingStep: "Rendering step",
+    errorGenProcess: "Failed to generate process sequence.",
+    processSteps: "Process Steps",
+    allSteps: "All Steps"
   },
   fr: {
     appTitle: "ScienceSnap",
@@ -168,7 +177,16 @@ export const translations = {
     styleManga: "Manga",
     styleGhibli: "Ghibli",
     btnFullScreen: "Plein écran",
-    exitFullScreen: "Quitter plein écran"
+    exitFullScreen: "Quitter plein écran",
+    tabProcess: "Processus/Séquence",
+    placeholderProcess: "Ex: Photosynthèse, Cycle de l'eau, Métamorphose du papillon...",
+    loadingDiscoveringProcess: "Analyse de la structure du processus...",
+    loadingGeneratingStep: "Génération de l'étape",
+    loadingPlanningStep: "Planification visuelle de l'étape",
+    loadingRenderingStep: "Rendu de l'étape",
+    errorGenProcess: "Échec de la génération de la séquence de processus.",
+    processSteps: "Étapes du Processus",
+    allSteps: "Toutes les Étapes"
   }
 };
 

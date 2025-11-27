@@ -97,9 +97,117 @@ Clearly specify the text to display, as it must be rendered accurately. Avoid te
 These infographics will be used in schools or educational contexts to stimulate interest in science.
 Our goal is to spark scientific curiosity by presenting surprising and fun facts in a memorable way.  
 
-### **Scientific Text:** 
+### **Scientific Text:**
 Scientific Domain: {{DOMAIN}}
 Title: {{TITLE}}
 Text:
 {{TEXT}}
+`;
+
+export const PROCESS_DISCOVERY_PROMPT = `
+#Role
+You are a multilingual scientific expert specialized in decomposing complex processes into clear, sequential steps suitable for {{TARGET_AUDIENCE}}.
+
+#Task
+Analyze this scientific process: "{{PROCESS}}"
+
+Your goal is to determine the optimal way to explain this process through a sequence of visual steps. Return a JSON object with:
+- "processName": The name of the process (string)
+- "domain": The scientific domain this belongs to (string, e.g., "Biology", "Physics")
+- "overviewText": A 200-word overview of the entire process that provides context
+- "suggestedSteps": The optimal number of steps to explain this process (integer between 3 and 8)
+- "stepTitles": An array of clear, descriptive titles for each step (e.g., ["Step 1: Light Absorption", "Step 2: Electron Excitation", ...])
+
+#Specifics
+- Analyze the complexity of the process and the maturity level of {{TARGET_AUDIENCE}} to determine step count
+- Steps should have clear causal relationships and logical flow
+- Each step should represent a distinct phase or transformation in the process
+- Titles should be action-oriented and describe what happens at that step
+- Avoid creating redundant or overlapping steps
+- Consider the attention span and learning capacity of {{TARGET_AUDIENCE}}
+- Adopt a {{TONE}} tone in your descriptions
+- **IMPORTANT: All output content (processName, domain, overviewText, stepTitles) must be strictly in {{LANGUAGE}}.**
+
+#Context
+These steps will be used to create an educational infographic sequence where each step is visualized and explained separately. The goal is to help learners understand complex processes through progressive, visual storytelling.
+`;
+
+export const PROCESS_STEP_EXPLANATION_PROMPT = `
+#Role
+You are a multilingual scientific educator creating detailed explanations for individual steps in a sequential process for {{TARGET_AUDIENCE}}.
+
+#Task
+Write a detailed explanation for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}} in the process: "{{PROCESS_NAME}}"
+
+The step title is: "{{STEP_TITLE}}"
+
+Context from previous steps:
+{{PREVIOUS_CONTEXT}}
+
+Return a JSON object with:
+- "stepNumber": The step number (integer)
+- "title": The step title
+- "description": A 200-250 word explanation of what happens in this specific step
+- "keyEvents": An array of 2-3 key phenomena or actions that occur in this step (for visual emphasis)
+
+#Specifics
+- Focus ONLY on the events and mechanisms that occur within this specific step
+- Reference what happened in the previous step (how it led to this step)
+- Set up what comes next (how this step enables the following step)
+- Explain the WHY and HOW, not just the WHAT
+- Use analogies appropriate for {{TARGET_AUDIENCE}} to make concepts concrete
+- Avoid repeating information from previous steps
+- Break down complex mechanisms into understandable components
+- The description must be scientifically accurate yet accessible
+- Adopt a {{TONE}} tone
+- keyEvents should be short phrases suitable for highlighting in an infographic
+- **IMPORTANT: All output content must be strictly in {{LANGUAGE}}.**
+
+#Context
+This explanation will be used to create a visual infographic for this specific step. The keyEvents will help designers emphasize the most important transformations or phenomena to highlight visually.
+`;
+
+export const PROCESS_STEP_PLAN_PROMPT = `
+## **Task**
+Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}} in the process: "{{PROCESS_NAME}}"
+
+This is part of a sequence, so maintain visual consistency with the overall process narrative.
+
+Step Details:
+- Title: {{STEP_TITLE}}
+- Description: {{STEP_DESCRIPTION}}
+- Key Events: {{KEY_EVENTS}}
+
+Following these guidelines:
+
+1. **Emphasize the Step Number**: Clearly display "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" so viewers understand the sequence position
+2. **Show the Transformation**: Visually represent what changes or transforms during this specific step
+3. **Maintain Continuity**: Use consistent visual language with other steps (colors, metaphors, style)
+4. **Highlight Key Events**: Emphasize the 2-3 key events that define this step
+5. **Show Inputs and Outputs**: If applicable, show what enters this step and what is produced
+6. **Use Visual Metaphors**: Employ diagrams, arrows, icons, or metaphors suitable for {{TARGET_AUDIENCE}}
+7. **Create Focal Points**: Guide the viewer's eye to the most important transformation happening in this step
+8. **Balance Information**: Include enough detail to be educational without creating visual clutter
+
+## **Specifics**
+Your plan must be detailed enough for an AI image generator to create a compelling visual representation. Be specific about:
+- Layout and composition (where elements should be positioned)
+- Color coding (if using colors to distinguish components or processes)
+- Key visual elements (arrows showing flow, icons representing concepts, diagrams)
+- Text placement and sizing hierarchy
+- Any step-specific indicators or badges
+- The {{VISUAL_STYLE}} style should be applied consistently throughout the sequence
+
+## **Context**
+These infographics will be viewed in sequence, so each image should feel like part of a coherent narrative. The viewer should be able to see at a glance where they are in the process and what is transforming at this stage.
+
+### **Required Elements:**
+- Process: {{PROCESS_NAME}}
+- Domain: {{DOMAIN}}
+- Target Audience: {{TARGET_AUDIENCE}}
+- Visual Style: {{VISUAL_STYLE}}
+- Step Number: {{STEP_NUMBER}} / {{TOTAL_STEPS}}
+- Step Title: {{STEP_TITLE}}
+
+**IMPORTANT: The Plan must be written in {{LANGUAGE}}. All text elements to be displayed on the infographic MUST be in {{LANGUAGE}}.**
 `;

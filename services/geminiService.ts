@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle } from "../types";
-import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, STYLE_CONFIG } from "../constants";
+import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, STYLE_CONFIG } from "../constants";
 
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
@@ -28,11 +28,11 @@ const retryWithBackoff = async <T>(operation: () => Promise<T>, retries = 3, ini
   try {
     return await operation();
   } catch (error: any) {
-    const isTransient = 
-      error.status === 503 || 
-      error.code === 503 || 
-      error.status === 429 || 
-      error.code === 429 || 
+    const isTransient =
+      error.status === 503 ||
+      error.code === 503 ||
+      error.status === 429 ||
+      error.code === 429 ||
       (error.message && error.message.toLowerCase().includes('overloaded'));
 
     if (retries > 0 && isTransient) {
@@ -42,6 +42,21 @@ const retryWithBackoff = async <T>(operation: () => Promise<T>, retries = 3, ini
     }
     throw error;
   }
+};
+
+// Helper to wrap promises with timeout
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operation: string
+): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`${operation} timed out after ${timeoutMs / 1000} seconds. The model may be unresponsive. Please try again later.`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
 };
 
 // Helper to inject audience and style settings
@@ -187,7 +202,7 @@ export const generateFactFromConcept = async (concept: string, lang: Language, a
 
 export const generateInfographicPlan = async (fact: ScientificFact, lang: Language, audience: Audience, style: ArtStyle): Promise<string> => {
   const ai = getAiClient();
-  
+
   // Use replacer functions (() => value) to avoid issues if the content contains special replacement patterns like '$&'
   let prompt = INFOGRAPHIC_PLAN_PROMPT
     .replace('{{DOMAIN}}', () => fact.domain)
@@ -198,13 +213,23 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
   prompt = injectContext(prompt, audience, style);
 
   try {
-    const response = await retryWithBackoff(() => ai.models.generateContent({
-      model: TEXT_MODEL,
-      contents: prompt,
-    }));
+    console.log(`[Plan Generation] Starting with fact: "${fact.title}"`);
+    const startTime = Date.now();
+
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: prompt,
+      })),
+      60000,
+      "Plan generation"
+    );
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[Plan Generation] API responded in ${elapsed}ms`);
 
     const text = response.text;
-    
+
     if (!text) {
         const candidate = response.candidates?.[0];
         // Check for safety blockage or other finish reasons
@@ -220,12 +245,12 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
   }
 };
 
-export const generateInfographicImage = async (plan: string, model: ImageModelType, aspectRatio: AspectRatio, style: ArtStyle): Promise<string> => {
+export const generateInfographicImage = async (plan: string, model: ImageModelType, aspectRatio: AspectRatio, style: ArtStyle, timeoutMs: number = 60000): Promise<string> => {
   const ai = getAiClient();
 
   const config: any = {
       imageConfig: {
-          aspectRatio: aspectRatio, 
+          aspectRatio: aspectRatio,
       }
   };
 
@@ -242,11 +267,27 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
   const prompt = `Generate a high-quality educational infographic image based on the following detailed plan:${styleInstruction}\n\n${plan}`;
 
   try {
-    const response = await retryWithBackoff(() => ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: config
-    }));
+    console.log(`[Image Generation] Starting with model: ${model}, aspect ratio: ${aspectRatio}, style: ${style}, timeout: ${timeoutMs}ms`);
+    const startTime = Date.now();
+
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: model,
+        contents: {
+          parts: [
+            {
+              text: prompt
+            }
+          ]
+        },
+        config: config
+      })),
+      timeoutMs,
+      "Image generation"
+    );
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[Image Generation] API responded in ${elapsed}ms`);
 
     // Extract image
     for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -255,7 +296,7 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
         return `data:${mimeType};base64,${part.inlineData.data}`;
       }
     }
-    
+
     // Check if the model refused to generate the image (e.g. Safety or Recitation)
     const candidate = response.candidates?.[0];
     if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
@@ -275,7 +316,15 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
       console.warn("Model returned text instead of image:", textPart.text);
       throw new Error(`Model returned text instead of image: "${textPart.text.substring(0, 100)}..."`);
     }
-    
+
+    // Log detailed diagnostics when no image found
+    console.error('[Image Generation] No image data in response:', {
+      finishReason: candidate?.finishReason,
+      hasParts: !!candidate?.content?.parts,
+      partsCount: candidate?.content?.parts?.length,
+      response: JSON.stringify(response, null, 2).substring(0, 500)
+    });
+
     throw new Error("No image data found in response. Please try again.");
   } catch (error) {
     console.error("Error generating image:", error);
@@ -291,7 +340,7 @@ export const editInfographic = async (imageInput: string, instruction: string, m
 
     const config: any = {
         imageConfig: {
-            aspectRatio: aspectRatio, 
+            aspectRatio: aspectRatio,
         }
     };
 
@@ -304,23 +353,33 @@ export const editInfographic = async (imageInput: string, instruction: string, m
         styleInstruction = ` Maintain the ${style} visual style.`;
     }
 
-    const response = await retryWithBackoff(() => ai.models.generateContent({
-      model: model,
-      contents: {
-        parts: [
-          {
-            text: `Edit this image: ${instruction}.${styleInstruction}`
-          },
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: cleanBase64
+    console.log(`[Image Edit] Starting edit with instruction: "${instruction.substring(0, 50)}..."`);
+    const startTime = Date.now();
+
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: model,
+        contents: {
+          parts: [
+            {
+              text: `Edit this image: ${instruction}.${styleInstruction}`
+            },
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: cleanBase64
+              }
             }
-          }
-        ]
-      },
-      config: config
-    }));
+          ]
+        },
+        config: config
+      })),
+      60000,
+      "Image editing"
+    );
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[Image Edit] API responded in ${elapsed}ms`);
 
     for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) {
@@ -334,11 +393,165 @@ export const editInfographic = async (imageInput: string, instruction: string, m
     if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
         throw new Error(`Image editing blocked. Reason: ${candidate.finishReason}`);
     }
-      
+
     throw new Error("No edited image data found in response");
 
   } catch (error) {
     console.error("Error editing image:", error);
+    throw error;
+  }
+};
+
+// Process/Sequence Learning Mode Functions
+
+export const generateProcessStructure = async (
+  processName: string,
+  lang: Language,
+  audience: Audience
+): Promise<{
+  processName: string;
+  domain: string;
+  overviewText: string;
+  suggestedSteps: number;
+  stepTitles: string[];
+}> => {
+  const ai = getAiClient();
+  let prompt = PROCESS_DISCOVERY_PROMPT
+    .replace(/{{PROCESS}}/g, () => processName)
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  try {
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              processName: { type: Type.STRING },
+              domain: { type: Type.STRING },
+              overviewText: { type: Type.STRING },
+              suggestedSteps: { type: Type.INTEGER },
+              stepTitles: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
+            },
+            required: ["processName", "domain", "overviewText", "suggestedSteps", "stepTitles"]
+          }
+        }
+      })),
+      60000,
+      "Process structure generation"
+    );
+
+    const responseText = response.text;
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error("Error generating process structure:", error);
+    throw error;
+  }
+};
+
+export const generateStepExplanation = async (
+  processName: string,
+  stepNumber: number,
+  totalSteps: number,
+  stepTitle: string,
+  previousContext: string,
+  lang: Language,
+  audience: Audience
+): Promise<{
+  stepNumber: number;
+  title: string;
+  description: string;
+  keyEvents: string[];
+}> => {
+  const ai = getAiClient();
+  let prompt = PROCESS_STEP_EXPLANATION_PROMPT
+    .replace(/{{PROCESS_NAME}}/g, () => processName)
+    .replace(/{{STEP_NUMBER}}/g, () => stepNumber.toString())
+    .replace(/{{TOTAL_STEPS}}/g, () => totalSteps.toString())
+    .replace(/{{STEP_TITLE}}/g, () => stepTitle)
+    .replace(/{{PREVIOUS_CONTEXT}}/g, () => previousContext)
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  try {
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              stepNumber: { type: Type.INTEGER },
+              title: { type: Type.STRING },
+              description: { type: Type.STRING },
+              keyEvents: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
+            },
+            required: ["stepNumber", "title", "description", "keyEvents"]
+          }
+        }
+      })),
+      60000,
+      "Step explanation generation"
+    );
+
+    const responseText = response.text;
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error("Error generating step explanation:", error);
+    throw error;
+  }
+};
+
+export const generateStepInfographicPlan = async (
+  processName: string,
+  stepNumber: number,
+  totalSteps: number,
+  stepTitle: string,
+  stepDescription: string,
+  keyEventsStr: string,
+  lang: Language,
+  audience: Audience,
+  style: ArtStyle
+): Promise<string> => {
+  const ai = getAiClient();
+  let prompt = PROCESS_STEP_PLAN_PROMPT
+    .replace(/{{PROCESS_NAME}}/g, () => processName)
+    .replace(/{{STEP_NUMBER}}/g, () => stepNumber.toString())
+    .replace(/{{TOTAL_STEPS}}/g, () => totalSteps.toString())
+    .replace(/{{STEP_TITLE}}/g, () => stepTitle)
+    .replace(/{{STEP_DESCRIPTION}}/g, () => stepDescription)
+    .replace(/{{KEY_EVENTS}}/g, () => keyEventsStr)
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, style);
+
+  try {
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: prompt
+      })),
+      60000,
+      "Step plan generation"
+    );
+
+    return response.text;
+  } catch (error) {
+    console.error("Error generating step plan:", error);
     throw error;
   }
 };

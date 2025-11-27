@@ -37,29 +37,67 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, em
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {items.map((item, idx) => {
         const borderColor = borderColors[idx % borderColors.length];
+        const isSequence = item.isSequence && item.steps && item.steps.length > 0;
+
         return (
           <div
             key={item.id}
             className="group cursor-pointer flex flex-col gap-3 p-4 bg-white rounded-2xl border-4 border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:border-opacity-0 overflow-hidden"
             onClick={() => onItemClick(item)}
           >
-            <div className={`relative aspect-[3/4] rounded-xl bg-gray-100 overflow-hidden border-3 ${borderColor} shadow-md group-hover:shadow-lg transition-all`}>
-               <img
+            {/* Image/Thumbnail Section */}
+            {isSequence ? (
+              // Sequence Thumbnail Strip
+              <div className={`relative aspect-[3/4] rounded-xl bg-gray-100 overflow-hidden border-3 ${borderColor} shadow-md group-hover:shadow-lg transition-all`}>
+                <div className="grid grid-cols-3 h-full">
+                  {item.steps!.slice(0, 3).map((step, stepIdx) => (
+                    <div
+                      key={stepIdx}
+                      className={`relative bg-gray-200 border-r border-gray-300 last:border-r-0 overflow-hidden ${
+                        stepIdx === 0 ? 'col-span-2' : ''
+                      }`}
+                    >
+                      <img
+                        src={step.imageUrl}
+                        alt={`Step ${step.stepNumber}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {/* Step Count Badge */}
+                <div className="absolute top-2 right-2 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white">
+                  {item.totalSteps} steps
+                </div>
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+            ) : (
+              // Single Image
+              <div className={`relative aspect-[3/4] rounded-xl bg-gray-100 overflow-hidden border-3 ${borderColor} shadow-md group-hover:shadow-lg transition-all`}>
+                <img
                   src={item.imageUrl}
                   alt={item.fact.title}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </div>
+                />
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+            )}
 
+            {/* Info Section */}
             <div>
               <h4 className="text-gray-800 font-bold text-sm line-clamp-2 group-hover:text-pink-600 transition-colors">{item.fact.title}</h4>
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span className={`${borderColor.replace('border-', 'bg-')} text-white text-xs font-bold px-2 py-1 rounded-full`}>
                   {item.fact.domain}
                 </span>
+                {isSequence && (
+                  <span className="bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    Sequence
+                  </span>
+                )}
               </div>
             </div>
           </div>

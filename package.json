@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
     "@google/genai": "^1.30.0",
+    "@instantdb/react": "^0.22.68",
     "lucide-react": "^0.554.0",
-    "@instantdb/react": "^0.22.68"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

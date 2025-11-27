@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InfographicItem, ImageModelType, AspectRatio, ArtStyle } from '../types';
-import { X, Download, Wand2, RefreshCcw, Loader2, Maximize, Minimize } from 'lucide-react';
+import { X, Download, Wand2, RefreshCcw, Loader2, Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { editInfographic } from '../services/geminiService';
 
 interface ImageModalLabels {
@@ -40,28 +40,44 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  // Reset state when item changes
+  useEffect(() => {
+    setCurrentStepIndex(0);
+    setEditPrompt('');
+    setError(null);
+  }, [item?.id]);
 
   if (!isOpen || !item) return null;
 
+  // Check if this is a sequence
+  const isSequence = item.isSequence && item.steps && item.steps.length > 0;
+  const currentStep = isSequence ? item.steps![currentStepIndex] : null;
+  const currentImage = isSequence ? currentStep?.imageUrl : item.imageUrl;
+  const currentImageTitle = isSequence ? currentStep?.title : item.fact.title;
+
   const handleDownload = async () => {
-    if (!item.imageUrl) return;
-    
+    const imageToDownload = currentImage;
+    if (!imageToDownload) return;
+
     setIsDownloading(true);
     try {
       // Fetch the image to create a blob, ensuring it downloads rather than opens in preview
-      const response = await fetch(item.imageUrl);
+      const response = await fetch(imageToDownload);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       // Sanitize filename
-      const safeTitle = item.fact.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      link.download = `science-snap-${safeTitle}.png`;
-      
+      const baseTitle = item.fact.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const stepSuffix = isSequence ? `-step-${currentStepIndex + 1}` : '';
+      link.download = `science-snap-${baseTitle}${stepSuffix}.png`;
+
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
@@ -69,8 +85,10 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
       console.error("Download failed:", e);
       // Fallback to standard link behavior if fetch fails
       const link = document.createElement('a');
-      link.href = item.imageUrl;
-      link.download = `science-snap-${item.fact.title.replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.href = imageToDownload;
+      const baseTitle = item.fact.title.replace(/\s+/g, '-').toLowerCase();
+      const stepSuffix = isSequence ? `-step-${currentStepIndex + 1}` : '';
+      link.download = `science-snap-${baseTitle}${stepSuffix}.png`;
       link.target = "_blank";
       document.body.appendChild(link);
       link.click();
@@ -82,17 +100,40 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
 
   const handleEdit = async () => {
     if (!editPrompt.trim()) return;
-    
+    if (!currentImage) return;
+
     setIsEditing(true);
     setError(null);
     try {
-      const newImageUrl = await editInfographic(item.imageUrl, editPrompt, model, aspectRatio, style);
-      onUpdate({ ...item, imageUrl: newImageUrl });
+      const newImageUrl = await editInfographic(currentImage, editPrompt, model, aspectRatio, style);
+
+      if (isSequence && currentStep) {
+        // Update only the current step in the sequence
+        const updatedSteps = [...item.steps!];
+        updatedSteps[currentStepIndex] = {
+          ...currentStep,
+          imageUrl: newImageUrl
+        };
+        onUpdate({ ...item, steps: updatedSteps });
+      } else {
+        // Single image: update directly
+        onUpdate({ ...item, imageUrl: newImageUrl });
+      }
       setEditPrompt('');
     } catch (err) {
       setError("Failed to edit image. Please try again.");
     } finally {
       setIsEditing(false);
+    }
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStepIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextStep = () => {
+    if (isSequence && item.steps) {
+      setCurrentStepIndex(prev => Math.min(item.steps!.length - 1, prev + 1));
     }
   };
 
@@ -107,7 +148,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
         <div className="relative bg-white border-4 border-gradient rounded-3xl max-w-5xl w-full max-h-[90vh] flex flex-col md:flex-row overflow-hidden shadow-2xl">
           {/* Image Section */}
           <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6 relative overflow-y-auto">
-               <div className="relative max-w-full max-h-full group">
+               <div className="relative max-w-full max-h-full group w-full h-full flex items-center justify-center">
                   {isEditing && (
                       <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10 rounded-lg">
                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mb-4"></div>
@@ -115,10 +156,42 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                       </div>
                   )}
                   <img
-                      src={item.imageUrl}
-                      alt={item.fact.title}
+                      src={currentImage}
+                      alt={currentImageTitle}
                       className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-lg border-2 border-gray-200"
                   />
+
+                  {/* Navigation Arrows for Sequences */}
+                  {isSequence && item.steps && item.steps.length > 1 && (
+                    <>
+                      {currentStepIndex > 0 && (
+                        <button
+                          onClick={handlePrevStep}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                          title="Previous Step"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                      )}
+                      {currentStepIndex < item.steps.length - 1 && (
+                        <button
+                          onClick={handleNextStep}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                          title="Next Step"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Step Indicator */}
+                  {isSequence && item.steps && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 px-4 py-2 rounded-full shadow-lg border-2 border-pink-300">
+                      <p className="text-xs font-bold text-gray-800">Step {currentStepIndex + 1} / {item.steps.length}</p>
+                    </div>
+                  )}
+
                   {/* Full Screen Toggle */}
                   <button
                     onClick={() => setIsFullScreen(true)}
@@ -149,6 +222,37 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                   <p className="text-gray-800 text-lg font-bold">{item.fact.title}</p>
               </div>
 
+              {/* Sequence Step Info */}
+              {isSequence && currentStep && (
+                <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-3 rounded-lg border-2 border-purple-300">
+                  <h3 className="text-xs uppercase tracking-wider text-purple-700 font-bold mb-1">📍 {currentStep.title}</h3>
+                  <p className="text-gray-700 text-xs leading-relaxed">{currentStep.description}</p>
+                </div>
+              )}
+
+              {/* Thumbnail Strip for Sequences */}
+              {isSequence && item.steps && item.steps.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {item.steps.map((step, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentStepIndex(idx)}
+                      className={`flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all ${
+                        idx === currentStepIndex
+                          ? 'border-pink-500 scale-110'
+                          : 'border-gray-300 hover:border-pink-400'
+                      }`}
+                    >
+                      <img
+                        src={step.imageUrl}
+                        alt={`Step ${idx + 1}`}
+                        className="w-12 h-12 object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Metadata Chips - Colorful */}
               <div className="flex flex-wrap gap-2 pt-2">
                   {item.audience && (
@@ -174,6 +278,11 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                   {item.language && (
                       <span className="px-3 py-1 bg-green-100 border border-green-400 rounded-full text-xs text-green-700 font-bold">
                           🌍 {item.language.toUpperCase()}
+                      </span>
+                  )}
+                  {isSequence && (
+                      <span className="px-3 py-1 bg-indigo-100 border border-indigo-400 rounded-full text-xs text-indigo-700 font-bold">
+                          🔄 Sequence
                       </span>
                   )}
               </div>
@@ -241,8 +350,8 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
              <Minimize className="w-6 h-6" />
            </button>
            <img
-             src={item.imageUrl}
-             alt={item.fact.title}
+             src={currentImage}
+             alt={currentImageTitle}
              className="w-full h-full object-contain p-4"
            />
         </div>

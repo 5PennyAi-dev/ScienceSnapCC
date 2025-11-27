@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle } from './types';
-import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept } from './services/geminiService';
+import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode } from './types';
+import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan } from './services/geminiService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
 import { GalleryGrid } from './components/GalleryGrid';
@@ -23,7 +23,7 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('input');
   
   // Search State for Generation
-  const [searchMode, setSearchMode] = useState<'domain' | 'concept'>('domain');
+  const [searchMode, setSearchMode] = useState<SearchMode>('domain');
   const [query, setQuery] = useState('');
 
   const [facts, setFacts] = useState<ScientificFact[]>([]);
@@ -32,6 +32,17 @@ const App: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [currentPlan, setCurrentPlan] = useState('');
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+
+  // Process/Sequence Learning Mode State
+  const [processStructure, setProcessStructure] = useState<{
+    processName: string;
+    domain: string;
+    overviewText: string;
+    suggestedSteps: number;
+    stepTitles: string[];
+  } | null>(null);
+  const [currentSequence, setCurrentSequence] = useState<InfographicStep[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   
   // Error State
   const [error, setError] = useState<string | null>(null);
@@ -58,26 +69,51 @@ const App: React.FC = () => {
     infographics: {} 
   });
   
-  // Flatten DB data to match InfographicItem[]
+  // Flatten DB data to match InfographicItem[] (supports both single images and sequences)
   const gallery: InfographicItem[] = useMemo(() => {
     if (!data?.infographics) return [];
-    
-    return Object.values(data.infographics).map((item: any) => ({
-        id: item.id,
-        timestamp: item.timestamp,
-        imageUrl: item.imageUrl,
-        plan: item.plan,
-        fact: {
+
+    return Object.values(data.infographics).map((item: any) => {
+      // Check if this is a sequence or legacy single-image item
+      if (item.isSequence && item.steps) {
+        // Sequence format
+        return {
+          id: item.id,
+          timestamp: item.timestamp,
+          isSequence: true,
+          steps: item.steps,
+          totalSteps: item.totalSteps || item.steps.length,
+          fact: {
             title: item.title,
             domain: item.domain,
             text: item.text
-        },
-        aspectRatio: item.aspectRatio,
-        style: item.style,
-        audience: item.audience,
-        modelName: item.modelName,
-        language: item.language
-    })).sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+          },
+          aspectRatio: item.aspectRatio,
+          style: item.style,
+          audience: item.audience,
+          modelName: item.modelName,
+          language: item.language
+        } as InfographicItem;
+      } else {
+        // Legacy single-image format
+        return {
+          id: item.id,
+          timestamp: item.timestamp,
+          imageUrl: item.imageUrl,
+          plan: item.plan,
+          fact: {
+            title: item.title,
+            domain: item.domain,
+            text: item.text
+          },
+          aspectRatio: item.aspectRatio,
+          style: item.style,
+          audience: item.audience,
+          modelName: item.modelName,
+          language: item.language
+        } as InfographicItem;
+      }
+    }).sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
   }, [data]);
 
   // Derived state for domains
@@ -166,8 +202,10 @@ const App: React.FC = () => {
 
     if (searchMode === 'domain') {
         await handleDomainSubmit();
-    } else {
+    } else if (searchMode === 'concept') {
         await handleConceptSubmit();
+    } else if (searchMode === 'process') {
+        await handleProcessSubmit();
     }
   };
 
@@ -189,13 +227,147 @@ const App: React.FC = () => {
   const handleConceptSubmit = async () => {
     setLoading(true);
     setLoadingMessage(`${t.loadingResearching} (${query})...`);
-    
+
     try {
       const fact = await generateFactFromConcept(query, language, audience);
       // Skip selection, go straight to processing
       await processFactToInfographic(fact);
     } catch (err: any) {
       setError(err.message || t.errorGenConcept);
+      setLoading(false);
+    }
+  };
+
+  const handleProcessSubmit = async () => {
+    setLoading(true);
+    setLoadingMessage(`${t.loadingDiscoveringProcess} (${query})...`);
+
+    try {
+      // Step 1: Discover process structure
+      console.log("[Process] Starting process structure generation...");
+      const structure = await generateProcessStructure(query, language, audience);
+      console.log(`[Process] Generated structure with ${structure.stepTitles.length} steps:`, structure.stepTitles);
+      setProcessStructure(structure);
+
+      // Step 2: Generate each step sequentially
+      const steps: InfographicStep[] = [];
+      let previousContext = structure.overviewText;
+
+      for (let i = 0; i < structure.stepTitles.length; i++) {
+        const stepNum = i + 1;
+        const totalSteps = structure.stepTitles.length;
+
+        try {
+          console.log(`\n[Step ${stepNum}] ========================================`);
+          console.log(`[Step ${stepNum}] Starting step generation (${stepNum}/${totalSteps})`);
+
+          setCurrentStepIndex(stepNum);
+          setLoadingMessage(`${t.loadingGeneratingStep} ${stepNum}/${totalSteps}...`);
+
+          // 2a: Get detailed explanation for this step
+          console.log(`[Step ${stepNum}] Generating explanation for "${structure.stepTitles[i]}"...`);
+          const stepExplanation = await generateStepExplanation(
+            structure.processName,
+            stepNum,
+            totalSteps,
+            structure.stepTitles[i],
+            previousContext,
+            language,
+            audience
+          );
+          console.log(`[Step ${stepNum}] ✓ Explanation complete. Title: "${stepExplanation.title}"`);
+
+          setLoadingMessage(`${t.loadingPlanningStep} ${stepNum}/${totalSteps}...`);
+
+          // 2b: Generate visual plan for this step
+          console.log(`[Step ${stepNum}] Generating visual plan...`);
+          const keyEventsStr = stepExplanation.keyEvents.join(', ');
+          const stepPlan = await generateStepInfographicPlan(
+            structure.processName,
+            stepNum,
+            totalSteps,
+            stepExplanation.title,
+            stepExplanation.description,
+            keyEventsStr,
+            language,
+            audience,
+            artStyle
+          );
+          console.log(`[Step ${stepNum}] ✓ Visual plan generated (${stepPlan.length} chars)`);
+
+          setLoadingMessage(`${t.loadingRenderingStep} ${stepNum}/${totalSteps}...`);
+
+          // 2c: Render the image (use longer timeout for process sequences - 2 minutes per step)
+          console.log(`[Step ${stepNum}] Rendering image with 120s timeout...`);
+          const stepImage = await generateInfographicImage(stepPlan, imageModel, aspectRatio, artStyle, 120000);
+          console.log(`[Step ${stepNum}] ✓ Image rendered successfully`);
+
+          // 2d: Add to sequence
+          const step: InfographicStep = {
+            stepNumber: stepNum,
+            title: stepExplanation.title,
+            description: stepExplanation.description,
+            plan: stepPlan,
+            imageUrl: stepImage
+          };
+
+          steps.push(step);
+          console.log(`[Step ${stepNum}] ✓ Step complete. Sequence length: ${steps.length}/${totalSteps}`);
+          setCurrentSequence([...steps]); // Update UI progressively
+
+          // Update context for next step
+          previousContext += `\n\nStep ${stepNum}: ${stepExplanation.description}`;
+
+        } catch (stepErr: any) {
+          console.error(`\n[Step ${stepNum}] ❌ FAILED`);
+          console.error(`[Step ${stepNum}] Error type: ${stepErr.constructor.name}`);
+          console.error(`[Step ${stepNum}] Error message:`, stepErr.message);
+          console.error(`[Step ${stepNum}] Stack:`, stepErr.stack);
+          console.error(`[Step ${stepNum}] Steps completed so far: ${steps.length}`);
+
+          // Re-throw with context about which step failed
+          throw new Error(`Step ${stepNum} failed: ${stepErr.message}`);
+        }
+      }
+
+      console.log(`\n[Process] ✓ All steps generated successfully! Total: ${steps.length}`);
+
+      // Step 3: Validate sequence before showing result
+      if (!steps || steps.length === 0) {
+        throw new Error("No steps were generated. Please try again.");
+      }
+
+      console.log(`[Process] Creating infographic item with ${steps.length} steps...`);
+
+      // Step 4: Move to result view
+      setAppState('result');
+
+    } catch (err: any) {
+      console.error("\n[Process Generation FATAL ERROR]");
+      console.error("Error:", err);
+
+      // Provide context-aware error messages
+      let errorMessage = t.errorGenProcess;
+      if (err.message) {
+        if (err.message.includes('timed out')) {
+          errorMessage = "Generation took too long. Try a simpler process or refresh and try again.";
+        } else if (err.message.includes('blocked')) {
+          errorMessage = "Content was blocked by safety filters. Try rephrasing the process.";
+        } else if (err.message.includes('rate limit')) {
+          errorMessage = "API rate limit reached. Please wait a moment and try again.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      console.error("Final error message:", errorMessage);
+      setError(errorMessage);
+      setAppState('input');
+
+      // Clear partial sequence on error
+      setCurrentSequence([]);
+      setProcessStructure(null);
+    } finally {
       setLoading(false);
     }
   };
@@ -241,50 +413,87 @@ const App: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (selectedFact && currentImage && currentPlan) {
-      setLoading(true);
-      setLoadingMessage(t.loadingSaving);
+    if (!selectedFact && currentSequence.length === 0) return;
 
-      try {
-        const newItemId = id();
+    setLoading(true);
+    setLoadingMessage(t.loadingSaving);
 
-        // This will try ImageKit, but return Base64 if it fails so we ALWAYS save
+    try {
+      const newItemId = id();
+
+      // Check if this is a sequence or single image
+      const isSequence = currentSequence.length > 0;
+
+      if (isSequence && processStructure) {
+        // Sequence save: Upload all images in parallel
+        const uploadPromises = currentSequence.map((step, idx) =>
+          uploadImageToStorage(step.imageUrl, `${newItemId}-step-${idx + 1}.png`)
+        );
+        const uploadedUrls = await Promise.all(uploadPromises);
+
+        // Update step URLs with uploaded versions
+        const stepsToSave = currentSequence.map((step, idx) => ({
+          ...step,
+          imageUrl: uploadedUrls[idx]
+        }));
+
+        const dataToSave = {
+          id: newItemId,
+          timestamp: Date.now(),
+          title: processStructure.processName,
+          domain: processStructure.domain,
+          text: processStructure.overviewText,
+          isSequence: true,
+          steps: stepsToSave,
+          totalSteps: stepsToSave.length,
+          // Metadata
+          aspectRatio: aspectRatio,
+          style: artStyle,
+          audience: audience,
+          modelName: imageModel,
+          language: language
+        };
+
+        console.log('Sequence data to save:', dataToSave);
+
+        await db.transact(db.tx.infographics[newItemId].update(dataToSave));
+        console.log(`✅ Successfully saved process sequence ${newItemId} to database`);
+
+      } else if (selectedFact && currentImage && currentPlan) {
+        // Single image save: Existing logic
         const imageUrlToSave = await uploadImageToStorage(currentImage, `${newItemId}.png`);
 
         const isUrl = imageUrlToSave.startsWith('http');
         console.log(`Saving to DB. Source: ${isUrl ? 'ImageKit Cloud' : 'Local Base64'}`);
 
-        // Prepare data object for saving
         const dataToSave = {
-            id: newItemId,
-            timestamp: Date.now(),
-            title: selectedFact.title,
-            domain: selectedFact.domain,
-            text: selectedFact.text,
-            plan: currentPlan,
-            imageUrl: imageUrlToSave,
-            // New fields
-            aspectRatio: aspectRatio,
-            style: artStyle,
-            audience: audience,
-            modelName: imageModel,
-            language: language
+          id: newItemId,
+          timestamp: Date.now(),
+          title: selectedFact.title,
+          domain: selectedFact.domain,
+          text: selectedFact.text,
+          plan: currentPlan,
+          imageUrl: imageUrlToSave,
+          // Metadata
+          aspectRatio: aspectRatio,
+          style: artStyle,
+          audience: audience,
+          modelName: imageModel,
+          language: language
         };
 
         console.log('Data to save:', dataToSave);
 
-        // Save metadata to InstantDB
-        // Use db.tx (not tx) and .update() to create the document
         await db.transact(db.tx.infographics[newItemId].update(dataToSave));
-
         console.log(`✅ Successfully saved infographic ${newItemId} to database`);
-        setAppState('gallery');
-      } catch (e: any) {
-        console.error("Save Operation Failed:", e);
-        setError(`${t.errorSave}: ${e.message}`);
-      } finally {
-        setLoading(false);
       }
+
+      setAppState('gallery');
+    } catch (e: any) {
+      console.error("Save Operation Failed:", e);
+      setError(`${t.errorSave}: ${e.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -331,6 +540,9 @@ const App: React.FC = () => {
 
   // Loading Overlay
   if (loading) {
+    const totalSteps = processStructure?.suggestedSteps || 0;
+    const isProcessMode = searchMode === 'process' && totalSteps > 0;
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
          {/* Background Animation */}
@@ -346,7 +558,26 @@ const App: React.FC = () => {
                     {appState === 'generating' ? <Sparkles className="w-12 h-12 text-pink-500 animate-bounce-light" /> : <Atom className="w-12 h-12 text-pink-500 animate-spin-slow" />}
                 </div>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{loadingMessage}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">{loadingMessage}</h2>
+
+            {/* Process Step Progress Indicator */}
+            {isProcessMode && (
+              <div className="flex gap-2 mb-6">
+                {Array.from({ length: totalSteps }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`w-3 h-3 rounded-full transition-all ${
+                      idx < currentStepIndex
+                        ? 'bg-green-400 scale-100'
+                        : idx === currentStepIndex
+                          ? 'bg-pink-400 animate-pulse scale-125'
+                          : 'bg-white/30'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
             <p className="text-white/70">✨ Science in the making... ✨</p>
          </div>
       </div>
@@ -504,6 +735,13 @@ const App: React.FC = () => {
                         <Lightbulb className="w-4 h-4" />
                         {t.tabConcept}
                     </button>
+                    <button
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'process' ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white' : 'text-gray-600 hover:text-pink-600'}`}
+                        onClick={() => setSearchMode('process')}
+                    >
+                        <ArrowRight className="w-4 h-4" />
+                        {t.tabProcess}
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="relative">
@@ -511,7 +749,7 @@ const App: React.FC = () => {
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder={searchMode === 'domain' ? t.placeholderDomain : t.placeholderConcept}
+                        placeholder={searchMode === 'domain' ? t.placeholderDomain : searchMode === 'concept' ? t.placeholderConcept : t.placeholderProcess}
                         className="w-full bg-transparent text-gray-800 text-lg p-4 pl-6 pr-40 focus:outline-none placeholder:text-gray-400"
                     />
                     <button
@@ -519,7 +757,7 @@ const App: React.FC = () => {
                         disabled={!query.trim()}
                         className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg"
                     >
-                        {searchMode === 'domain' ? t.btnDiscover : t.btnVisualize}
+                        {searchMode === 'domain' ? t.btnDiscover : searchMode === 'concept' ? t.btnVisualize : t.btnDiscover}
                         <ArrowRight className="w-4 h-4" />
                     </button>
                 </form>
@@ -573,8 +811,8 @@ const App: React.FC = () => {
             </div>
         )}
 
-        {/* RESULT STATE */}
-        {appState === 'result' && currentImage && selectedFact && (
+        {/* RESULT STATE - Single Image */}
+        {appState === 'result' && currentImage && selectedFact && currentSequence.length === 0 && (
             <div className="animate-fade-in max-w-5xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <button
@@ -630,6 +868,68 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        )}
+
+        {/* RESULT STATE - Process Sequence */}
+        {appState === 'result' && currentSequence.length > 0 && processStructure && (
+            <div className="animate-fade-in max-w-7xl mx-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <button
+                        onClick={() => setAppState('input')}
+                        className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors font-bold text-sm"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        {t.btnCreateNew}
+                    </button>
+                    <div className="flex gap-3">
+                        {/* Save Button */}
+                        <button
+                            onClick={handleSave}
+                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg shadow-pink-500/30 text-sm font-bold flex items-center gap-2 transition-all"
+                        >
+                            <Rocket className="w-4 h-4" />
+                            {t.btnSave}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Sequence Header */}
+                <div className="mb-8 bg-white p-6 rounded-3xl border-2 border-pink-200 shadow-lg">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-2">{processStructure.processName}</h2>
+                    <p className="text-sm text-gray-600 mb-4">{processStructure.domain} • {t.processSteps}: {processStructure.suggestedSteps}</p>
+                    <p className="text-gray-700 leading-relaxed text-sm">{processStructure.overviewText}</p>
+                </div>
+
+                {/* Steps Grid */}
+                <div className="grid md:grid-cols-3 gap-6">
+                    {currentSequence.map((step, idx) => (
+                        <div
+                            key={idx}
+                            className="bg-white rounded-2xl border-2 border-pink-200 shadow-lg overflow-hidden hover:shadow-xl hover:scale-105 transition-all"
+                        >
+                            {/* Step Badge */}
+                            <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between">
+                                <span>{step.title}</span>
+                                <span className="bg-white/30 px-2 py-1 rounded-full text-xs font-bold">{step.stepNumber}/{currentSequence.length}</span>
+                            </div>
+
+                            {/* Image */}
+                            <div className="relative w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+                                <img
+                                    src={step.imageUrl}
+                                    alt={`Step ${step.stepNumber}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+
+                            {/* Description */}
+                            <div className="p-4">
+                                <p className="text-xs text-gray-700 line-clamp-3 leading-relaxed">{step.description}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         )}

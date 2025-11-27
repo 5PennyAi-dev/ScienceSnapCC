@@ -5,12 +5,24 @@ export interface ScientificFact {
   text: string;
 }
 
+export interface InfographicStep {
+  stepNumber: number;
+  title: string;
+  description: string;
+  plan: string;
+  imageUrl: string; // Base64
+}
+
 export interface InfographicItem {
   id: string;
   timestamp: number;
   fact: ScientificFact;
-  imageUrl: string; // Base64
-  plan: string;
+  imageUrl?: string; // Base64 (optional for sequence items)
+  plan?: string; // (optional for sequence items)
+  // New fields for sequences
+  isSequence?: boolean;
+  steps?: InfographicStep[];
+  totalSteps?: number;
   // Metadata fields
   aspectRatio?: AspectRatio;
   style?: ArtStyle;
@@ -20,6 +32,8 @@ export interface InfographicItem {
 }
 
 export type AppState = 'input' | 'selection' | 'planning' | 'generating' | 'result' | 'gallery';
+
+export type SearchMode = 'domain' | 'concept' | 'process';
 
 export enum AspectRatio {
   SQUARE = '1:1',
