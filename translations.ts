@@ -93,7 +93,24 @@ export const translations = {
     loadingRenderingStep: "Rendering step",
     errorGenProcess: "Failed to generate process sequence.",
     processSteps: "Process Steps",
-    allSteps: "All Steps"
+    allSteps: "All Steps",
+    loadingMessages: [
+      "Analyzing composition...",
+      "Applying lighting effects...",
+      "Refining details...",
+      "Finalizing render...",
+      "Polishing pixels...",
+      "Adding scientific accuracy...",
+      "Enhancing visual clarity..."
+    ],
+    loadingMessagesResearch: [
+      "Consulting scientific archives...",
+      "Verifying data sources...",
+      "Synthesizing facts...",
+      "Formatting results...",
+      "Checking accuracy...",
+      "Organizing information..."
+    ]
   },
   fr: {
     appTitle: "ScienceSnap",
@@ -186,7 +203,24 @@ export const translations = {
     loadingRenderingStep: "Rendu de l'étape",
     errorGenProcess: "Échec de la génération de la séquence de processus.",
     processSteps: "Étapes du Processus",
-    allSteps: "Toutes les Étapes"
+    allSteps: "Toutes les Étapes",
+    loadingMessages: [
+      "Analyse de la composition...",
+      "Application des effets de lumière...",
+      "Raffinement des détails...",
+      "Finalisation du rendu...",
+      "Polissage des pixels...",
+      "Ajout de la précision scientifique...",
+      "Amélioration de la clarté visuelle..."
+    ],
+    loadingMessagesResearch: [
+      "Consultation des archives scientifiques...",
+      "Vérification des sources de données...",
+      "Synthèse des faits...",
+      "Mise en forme des résultats...",
+      "Vérification de l'exactitude...",
+      "Organisation des informations..."
+    ]
   }
 };
 

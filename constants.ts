@@ -63,7 +63,7 @@ Your goal is to write a single, rigorous, yet fascinating scientific entry about
 Provide a JSON object with:
 - "domain": The general scientific domain this concept belongs to.
 - "title": A catchy title (2-4 words).
-- "text": A 250-word explanation.
+- "text": A 500-word explanation.
 
 #Specifics
 - The explanation must be accurate but accessible to {{TARGET_AUDIENCE}}.
@@ -151,8 +151,8 @@ Context from previous steps:
 Return a JSON object with:
 - "stepNumber": The step number (integer)
 - "title": The step title
-- "description": A 200-250 word explanation of what happens in this specific step
-- "keyEvents": An array of 2-3 key phenomena or actions that occur in this step (for visual emphasis)
+- "description": A 100-150 word explanation of what happens in this specific step
+- "keyEvents": An array of 1-2 key phenomena or actions that occur in this step (for visual emphasis)
 
 #Specifics
 - Focus ONLY on the events and mechanisms that occur within this specific step
@@ -176,7 +176,54 @@ Return a JSON object with:
 This explanation will be used to create a visual infographic for this specific step ONLY. The infographic will show ONLY this step's content - nothing from other steps. The keyEvents will help designers emphasize the most important transformations or phenomena to highlight visually.
 `;
 
+
 export const PROCESS_STEP_PLAN_PROMPT = `
+## **Task**
+Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}}: "{{PROCESS_NAME}}"
+
+**Step Details:**
+- Title: {{STEP_TITLE}}
+- Description: {{STEP_DESCRIPTION}}
+- Key Events: {{KEY_EVENTS}}
+
+{{VISUAL_CONSISTENCY_CONTEXT}}
+
+## **Critical Requirements**
+
+**1. Text & Educational Content (for 8-10 year olds):**
+- **STEP TITLE**: Top-center, consistent design across all steps (same font, size, color, position)
+- **STEP BADGE**: "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" in top-right corner with consistent shape, colors, position
+- 3-5 labels identifying key objects/areas
+- 4-5 explanatory sentences (8-12 words each, simple language)
+- Annotations with arrows for important elements
+- 2-3 callout boxes for key events
+
+**2. Visual Consistency (maintain across ALL steps):**
+- Same color palette (specify 3-5 core colors with hex codes)
+- Same illustration style, line weight, shading
+- Same layout structure and positioning
+- Same title design template (font, size, color, effects)
+- Same badge design template (shape, colors, border, position)
+
+**3. Step-Specific Content:**
+- Show transformation/change in THIS step only
+- Highlight key events with visual emphasis
+- Show inputs/outputs clearly labeled
+- NO duplicate content within image or across steps
+- Focus ONLY on this step's timeframe
+
+## **Specifications**
+- Process: {{PROCESS_NAME}}
+- Domain: {{DOMAIN}}
+- Target Audience: {{TARGET_AUDIENCE}}
+- Visual Style: {{VISUAL_STYLE}}
+- Language: {{LANGUAGE}} (ALL text must be in this language)
+
+Be specific about layout, color codes, text placement, visual elements (arrows, icons, diagrams), and how {{VISUAL_STYLE}} applies.
+`;
+
+
+export const PROCESS_STEP_PLAN_PROMPT2 = `
 ## **Task**
 Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}} in the process: "{{PROCESS_NAME}}"
 
@@ -210,10 +257,10 @@ Following these guidelines:
      * Position it consistently (e.g., top-right corner, 20px from edges)
      * Size it to be prominent but not overwhelming
      * This design MUST remain EXACTLY THE SAME across all steps in the sequence - only the number changes!
-   - Add 3-5 TEXT LABELS that identify key components, objects, or areas in the scene
-   - Include 4-5 SHORT EXPLANATORY SENTENCES (8-12 words each) that describe what's happening
+   - Add 2-4 TEXT LABELS that identify key components, objects, or areas in the scene
+   - Include 3-4 SHORT EXPLANATORY SENTENCES (8-12 words each) that describe what's happening
    - Add ANNOTATIONS with arrows pointing to important elements
-   - Use CALLOUT BOXES to highlight the 2-3 key events
+   - Use CALLOUT BOXES to highlight the 1-2 key events
    - All text must be large enough for 8-10 year olds to read easily
    - Text should answer: "What is this?", "What's happening here?", and "Why is this important?"
 
@@ -240,8 +287,8 @@ Following these guidelines:
 **TEXT CONTENT REQUIREMENTS** (Critical for Educational Value):
 - The infographic MUST contain visible, readable text elements including:
   * Step title and step number badge
-  * 3-5 labels identifying key objects or areas
-  * 4-5 complete explanatory sentences (not just titles - actual kid-friendly explanations)
+  * 2-4 labels identifying key objects or areas
+  * 3-4 complete explanatory sentences (not just titles - actual kid-friendly explanations)
   * Callouts or annotations for the key events
 - Text hierarchy: Title (largest) → Explanatory sentences (medium) → Labels (smaller)
 - All text must be in simple language appropriate for 8-10 year olds

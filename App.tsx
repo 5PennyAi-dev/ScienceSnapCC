@@ -158,6 +158,34 @@ const App: React.FC = () => {
     }
   }, [galleryError]);
 
+  // Progressive Loading Messages
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (loading) {
+      let messages: string[] = [];
+      
+      if (appState === 'generating') {
+        messages = t.loadingMessages || [];
+      } else {
+        // For 'input', 'planning', 'selection' etc. (Research phase)
+        messages = t.loadingMessagesResearch || [];
+      }
+
+      if (messages.length > 0) {
+        let msgIndex = 0;
+        interval = setInterval(() => {
+          setLoadingMessage(messages[msgIndex % messages.length]);
+          msgIndex++;
+        }, 3000);
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loading, appState, t]);
+
   useEffect(() => {
     checkApiKey();
   }, []);
@@ -384,6 +412,10 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     
+    // Clear any previous process sequence state to ensure correct result rendering
+    setCurrentSequence([]);
+    setProcessStructure(null);
+    
     try {
       setLoadingMessage(t.loadingPlanning);
       const plan = await generateInfographicPlan(fact, language, audience, artStyle);
@@ -580,7 +612,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            <p className="text-white/70">✨ Science in the making... ✨</p>
+
          </div>
       </div>
     );
