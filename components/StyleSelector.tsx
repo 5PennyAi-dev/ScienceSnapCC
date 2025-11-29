@@ -33,7 +33,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({ selectedStyle, onS
     { id: 'WATERCOLOR', icon: <Droplet className="w-5 h-5" />, labelKey: 'styleWatercolor', color: 'text-blue-600', bgColor: 'bg-blue-100' },
     { id: 'CYBERPUNK', icon: <Cpu className="w-5 h-5" />, labelKey: 'styleCyberpunk', color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
     { id: 'VINTAGE', icon: <Coffee className="w-5 h-5" />, labelKey: 'styleVintage', color: 'text-amber-700', bgColor: 'bg-amber-100' },
-    { id: 'NEON', icon: <Zap className="w-5 h-5" />, labelKey: 'styleNeon', color: 'text-pink-600', bgColor: 'bg-pink-100' },
+    { id: 'NEON', icon: <Zap className="w-5 h-5" />, labelKey: 'styleNeon', color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
     { id: 'MANGA', icon: <BookOpen className="w-5 h-5" />, labelKey: 'styleManga', color: 'text-red-600', bgColor: 'bg-red-100' },
     { id: 'GHIBLI', icon: <Sparkles className="w-5 h-5" />, labelKey: 'styleGhibli', color: 'text-purple-600', bgColor: 'bg-purple-100' },
   ];
@@ -47,7 +47,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({ selectedStyle, onS
         className={`p-2.5 rounded-full transition-all flex items-center gap-2 border-2 ${
           selectedStyle !== 'DEFAULT'
             ? `${activeStyle.bgColor} ${activeStyle.color} border-transparent shadow-lg scale-110`
-            : 'bg-white text-purple-600 border-purple-300 hover:shadow-md'
+            : 'bg-white text-blue-600 border-blue-300 hover:shadow-md'
         }`}
         title={labels.styleLabel}
       >
@@ -56,9 +56,9 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({ selectedStyle, onS
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-56 bg-white border-2 border-purple-300 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in-up">
-          <div className="p-3 border-b-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
-            <p className="text-xs font-bold uppercase tracking-widest text-purple-700">{labels.styleLabel}</p>
+        <div className="absolute top-full right-0 mt-2 w-56 bg-white border-2 border-blue-300 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in-up">
+          <div className="p-3 border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{labels.styleLabel}</p>
           </div>
           <div className="p-2 grid gap-1.5">
             {styles.map((style) => (

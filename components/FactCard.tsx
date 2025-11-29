@@ -13,29 +13,29 @@ interface FactCardProps {
 }
 
 export const FactCard: React.FC<FactCardProps> = ({ fact, onSelect, index, labels }) => {
-  // Bright gradient backgrounds for each card
+  // Science-themed gradient backgrounds for each card
   const themes = [
     {
-      bg: 'bg-gradient-to-br from-pink-400 to-pink-500',
+      bg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
       badgeBg: 'bg-yellow-300',
       badgeText: 'text-yellow-700',
-      buttonBg: 'hover:bg-pink-600',
+      buttonBg: 'hover:bg-cyan-700',
       icon: Atom,
       borderColor: 'border-white'
     },
     {
-      bg: 'bg-gradient-to-br from-cyan-400 to-blue-500',
+      bg: 'bg-gradient-to-br from-teal-500 to-cyan-600',
       badgeBg: 'bg-orange-300',
       badgeText: 'text-orange-700',
-      buttonBg: 'hover:bg-cyan-600',
+      buttonBg: 'hover:bg-teal-700',
       icon: Beaker,
       borderColor: 'border-white'
     },
     {
-      bg: 'bg-gradient-to-br from-yellow-400 to-amber-500',
-      badgeBg: 'bg-mint-300',
-      badgeText: 'text-green-700',
-      buttonBg: 'hover:bg-yellow-600',
+      bg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
+      badgeBg: 'bg-emerald-300',
+      badgeText: 'text-emerald-700',
+      buttonBg: 'hover:bg-blue-700',
       icon: Microscope,
       borderColor: 'border-white'
     },
@@ -46,7 +46,7 @@ export const FactCard: React.FC<FactCardProps> = ({ fact, onSelect, index, label
 
   return (
     <div
-      className={`${theme.bg} border-8 ${theme.borderColor} rounded-3xl flex flex-col h-full transition-all duration-300 group relative overflow-hidden hover:scale-102 hover:-translate-y-2 shadow-2xl transform hover:shadow-3xl`}
+      className={`${theme.bg} border-8 ${theme.borderColor} rounded-xl flex flex-col h-full transition-all duration-300 group relative overflow-hidden hover:scale-102 hover:-translate-y-2 shadow-2xl transform hover:shadow-3xl`}
     >
       {/* Science Icon Watermark */}
       <div className="absolute -top-8 -right-8 opacity-20 group-hover:opacity-30 transition-opacity">

@@ -541,7 +541,7 @@ const App: React.FC = () => {
   if (isCheckingKey) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
       </div>
     );
   }
@@ -549,8 +549,8 @@ const App: React.FC = () => {
   if (!hasApiKey) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-white p-8 rounded-3xl border-4 border-pink-400 max-w-md shadow-2xl">
-            <Key className="w-12 h-12 text-pink-500 mx-auto mb-4" />
+        <div className="bg-white p-8 rounded-xl border-4 border-cyan-400 max-w-md shadow-2xl">
+            <Key className="w-12 h-12 text-cyan-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-800 mb-2">API Key Required</h1>
             <p className="text-gray-600 mb-6">
                 To use ScienceSnap's premium image generation features (Google Veo/Imagen),
@@ -558,12 +558,12 @@ const App: React.FC = () => {
             </p>
             <button
                 onClick={handleSelectKey}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 mx-auto"
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 mx-auto"
             >
                 Select API Key
             </button>
             <p className="mt-4 text-xs text-gray-500">
-                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-pink-500">
+                <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-cyan-500">
                     Learn more about billing
                 </a>
             </p>
@@ -581,15 +581,15 @@ const App: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
          {/* Background Animation */}
          <div className="absolute inset-0 z-0">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
          </div>
 
          <div className="z-10 flex flex-col items-center text-center p-6">
             <div className="relative mb-8">
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-cyan-400 rounded-full blur-xl opacity-60 animate-spin-slow"></div>
-                <div className="relative bg-white p-6 rounded-full border-4 border-pink-400 shadow-xl">
-                    {appState === 'generating' ? <Sparkles className="w-12 h-12 text-pink-500 animate-bounce-light" /> : <Atom className="w-12 h-12 text-pink-500 animate-spin-slow" />}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full blur-xl opacity-60 animate-spin-slow"></div>
+                <div className="relative bg-white p-6 rounded-full border-4 border-cyan-400 shadow-xl">
+                    {appState === 'generating' ? <Sparkles className="w-12 h-12 text-cyan-500 animate-bounce-light" /> : <Atom className="w-12 h-12 text-cyan-500 animate-spin-slow" />}
                 </div>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">{loadingMessage}</h2>
@@ -602,9 +602,9 @@ const App: React.FC = () => {
                     key={idx}
                     className={`w-3 h-3 rounded-full transition-all ${
                       idx < currentStepIndex
-                        ? 'bg-green-400 scale-100'
+                        ? 'bg-teal-400 scale-100'
                         : idx === currentStepIndex
-                          ? 'bg-pink-400 animate-pulse scale-125'
+                          ? 'bg-cyan-400 animate-pulse scale-125'
                           : 'bg-white/30'
                     }`}
                   />
@@ -643,7 +643,7 @@ const App: React.FC = () => {
             className="flex items-center gap-2 cursor-pointer group"
             onClick={() => setAppState('input')}
           >
-            <div className="bg-gradient-to-br from-pink-500 via-purple-500 to-cyan-400 p-2 rounded-lg group-hover:rotate-12 transition-transform shadow-lg">
+            <div className="bg-gradient-to-br from-cyan-500 via-blue-500 to-teal-400 p-2 rounded-lg group-hover:rotate-12 transition-transform shadow-lg">
                 <Atom className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-xl tracking-tight text-gray-800">
@@ -655,7 +655,7 @@ const App: React.FC = () => {
              {/* Gallery button - Always Visible */}
              <button
                 onClick={() => setAppState('gallery')}
-                className={`p-2 rounded-lg transition-all ${appState === 'gallery' ? 'bg-pink-100 text-pink-600' : 'text-gray-600 hover:text-pink-500'}`}
+                className={`p-2 rounded-lg transition-all ${appState === 'gallery' ? 'bg-cyan-100 text-cyan-600' : 'text-gray-600 hover:text-cyan-500'}`}
                 title={t.gallery}
              >
                 <Grid3X3 className="w-5 h-5" />
@@ -663,7 +663,7 @@ const App: React.FC = () => {
              <div className="h-6 w-px bg-gray-200 mx-1"></div>
              <button
                 onClick={() => setLanguage(l => l === 'en' ? 'fr' : 'en')}
-                className="text-xs font-bold px-3 py-1 rounded-full border-2 border-pink-400 text-pink-600 hover:bg-pink-50 transition-all"
+                className="text-xs font-bold px-3 py-1 rounded-full border-2 border-cyan-400 text-cyan-600 hover:bg-cyan-50 transition-all"
              >
                 {language.toUpperCase()}
              </button>
@@ -679,11 +679,7 @@ const App: React.FC = () => {
             
             {/* Hero Text */}
             <div className="text-center mb-12">
-               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 border-2 border-yellow-400 text-yellow-700 text-xs font-bold uppercase tracking-widest mb-6 shadow-md">
-                  <Sparkles className="w-4 h-4" />
-                  🧪 AI-Powered Science 🔬
-               </div>
-               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500">
+               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500">
                   {t.heroTitlePrefix} <span>{t.heroTitleHighlight}</span> {t.heroTitleMiddle} <span>{t.heroTitleSuffix}</span>
                </h1>
                <p className="text-gray-700 text-lg max-w-2xl mx-auto font-medium">
@@ -694,17 +690,17 @@ const App: React.FC = () => {
             {/* Controls Toolbar */}
             <div className="flex flex-wrap justify-center gap-3 mb-8">
                 {/* Audience Toggle */}
-                <div className="bg-pink-100 p-1.5 rounded-full border-2 border-pink-300 flex items-center shadow-md">
+                <div className="bg-cyan-100 p-1.5 rounded-full border-2 border-cyan-300 flex items-center shadow-md">
                     <button
                         onClick={() => setAudience('young')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'young' ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg scale-105' : 'text-pink-700 hover:bg-pink-200'}`}
+                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'young' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg scale-105' : 'text-cyan-700 hover:bg-cyan-200'}`}
                     >
                         <Baby className="w-4 h-4" />
                         <span className="hidden sm:inline">{t.audienceKids}</span>
                     </button>
                     <button
                         onClick={() => setAudience('adult')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'adult' ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg scale-105' : 'text-pink-700 hover:bg-pink-200'}`}
+                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'adult' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg scale-105' : 'text-cyan-700 hover:bg-cyan-200'}`}
                     >
                         <GraduationCap className="w-4 h-4" />
                         <span className="hidden sm:inline">{t.audienceAdults}</span>
@@ -712,7 +708,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Style Selector */}
-                <div className="bg-purple-100 p-1.5 rounded-full border-2 border-purple-300 flex items-center shadow-md">
+                <div className="bg-blue-100 p-1.5 rounded-full border-2 border-blue-300 flex items-center shadow-md">
                     <StyleSelector
                         selectedStyle={artStyle}
                         onSelect={setArtStyle}
@@ -753,24 +749,24 @@ const App: React.FC = () => {
             </div>
 
             {/* Search Box */}
-            <div className="bg-white border-4 border-pink-300 rounded-3xl p-3 shadow-xl">
-                <div className="flex border-b-2 border-pink-200 mb-2">
+            <div className="bg-white border-4 border-cyan-300 rounded-xl p-3 shadow-xl">
+                <div className="flex border-b-2 border-cyan-200 mb-2">
                     <button
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'domain' ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white' : 'text-gray-600 hover:text-pink-600'}`}
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'domain' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 'text-gray-600 hover:text-cyan-600'}`}
                         onClick={() => setSearchMode('domain')}
                     >
                         <Search className="w-4 h-4" />
                         {t.tabDomain}
                     </button>
                     <button
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'concept' ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white' : 'text-gray-600 hover:text-pink-600'}`}
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'concept' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 'text-gray-600 hover:text-cyan-600'}`}
                         onClick={() => setSearchMode('concept')}
                     >
                         <Lightbulb className="w-4 h-4" />
                         {t.tabConcept}
                     </button>
                     <button
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'process' ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white' : 'text-gray-600 hover:text-pink-600'}`}
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'process' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 'text-gray-600 hover:text-cyan-600'}`}
                         onClick={() => setSearchMode('process')}
                     >
                         <ArrowRight className="w-4 h-4" />
@@ -789,7 +785,7 @@ const App: React.FC = () => {
                     <button
                         type="submit"
                         disabled={!query.trim()}
-                        className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg"
+                        className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg"
                     >
                         {searchMode === 'domain' ? t.btnDiscover : searchMode === 'concept' ? t.btnVisualize : t.btnDiscover}
                         <ArrowRight className="w-4 h-4" />
@@ -800,7 +796,7 @@ const App: React.FC = () => {
             {/* Quick Start Chips */}
             <div className="mt-8 flex flex-wrap justify-center gap-3">
                 {['Astrophysics', 'Oceanography', 'Quantum Physics', 'Botany'].map((tag, idx) => {
-                    const colors = ['bg-pink-400 border-pink-600 text-white', 'bg-yellow-400 border-yellow-600 text-gray-800', 'bg-green-400 border-green-600 text-white', 'bg-purple-400 border-purple-600 text-white'];
+                    const colors = ['bg-cyan-500 border-cyan-700 text-white', 'bg-yellow-400 border-yellow-600 text-gray-800', 'bg-teal-500 border-teal-700 text-white', 'bg-blue-500 border-blue-700 text-white'];
                     return (
                         <button
                             key={tag}
@@ -821,13 +817,13 @@ const App: React.FC = () => {
                 <div className="flex items-center justify-between mb-8">
                     <button
                         onClick={() => setAppState('input')}
-                        className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors font-bold text-sm"
+                        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors font-bold text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         {t.backToInput}
                     </button>
                     <h2 className="text-xl font-bold text-gray-800">
-                        {t.discoveriesIn} <span className="text-pink-600">{query}</span>
+                        {t.discoveriesIn} <span className="text-cyan-600">{query}</span>
                     </h2>
                 </div>
 
@@ -851,7 +847,7 @@ const App: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                     <button
                         onClick={() => setAppState('input')}
-                        className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors font-bold text-sm"
+                        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors font-bold text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         {t.btnCreateNew}
@@ -862,13 +858,13 @@ const App: React.FC = () => {
                             onClick={() => handleFactSelect(selectedFact)}
                             className="px-4 py-2 rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold flex items-center gap-2 transition-colors"
                         >
-                            <Terminal className="w-4 h-4 text-purple-500" />
+                            <Terminal className="w-4 h-4 text-blue-500" />
                             {t.btnRegenerate}
                         </button>
                         {/* Save Button */}
                         <button
                             onClick={handleSave}
-                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg shadow-pink-500/30 text-sm font-bold flex items-center gap-2 transition-all"
+                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg shadow-cyan-500/30 text-sm font-bold flex items-center gap-2 transition-all"
                         >
                             <Rocket className="w-4 h-4" />
                             {t.btnSave}
@@ -876,9 +872,9 @@ const App: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8 bg-white p-6 rounded-3xl border-2 border-pink-200 shadow-lg">
+                <div className="grid md:grid-cols-2 gap-8 bg-white p-6 rounded-xl border-2 border-cyan-200 shadow-lg">
                     {/* Image Preview */}
-                    <div className="relative rounded-2xl overflow-hidden shadow-xl border-4 border-pink-300 bg-gradient-to-br from-gray-50 to-gray-100 group">
+                    <div className="relative rounded-xl overflow-hidden shadow-xl border-4 border-cyan-300 bg-gradient-to-br from-gray-50 to-gray-100 group">
                         <img src={currentImage} alt="Generated Infographic" className="w-full h-auto object-contain" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                             <p className="text-white text-xs font-mono opacity-70">Generated by {imageModel}</p>
@@ -888,16 +884,16 @@ const App: React.FC = () => {
                     {/* Info Panel */}
                     <div className="flex flex-col gap-6">
                         <div>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-pink-600 mb-2">{t.basedOn}</h3>
-                            <div className="bg-pink-50 p-4 rounded-xl border-2 border-pink-200">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-600 mb-2">{t.basedOn}</h3>
+                            <div className="bg-cyan-50 p-4 rounded-xl border-2 border-cyan-200">
                                 <h4 className="font-bold text-gray-800 mb-1">{selectedFact.title}</h4>
                                 <p className="text-sm text-gray-700 leading-relaxed">{selectedFact.text}</p>
                             </div>
                         </div>
 
                         <div className="flex-1">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 mb-2">{t.aiPlan}</h3>
-                            <div className="bg-purple-50 p-4 rounded-xl border-2 border-purple-200 h-64 overflow-y-auto text-xs font-mono text-purple-800 scrollbar-hide">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">{t.aiPlan}</h3>
+                            <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200 h-64 overflow-y-auto text-xs font-mono text-blue-800 scrollbar-hide">
                                 {currentPlan}
                             </div>
                         </div>
@@ -912,7 +908,7 @@ const App: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                     <button
                         onClick={() => setAppState('input')}
-                        className="flex items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors font-bold text-sm"
+                        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors font-bold text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         {t.btnCreateNew}
@@ -921,7 +917,7 @@ const App: React.FC = () => {
                         {/* Save Button */}
                         <button
                             onClick={handleSave}
-                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg shadow-pink-500/30 text-sm font-bold flex items-center gap-2 transition-all"
+                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg shadow-cyan-500/30 text-sm font-bold flex items-center gap-2 transition-all"
                         >
                             <Rocket className="w-4 h-4" />
                             {t.btnSave}
@@ -930,7 +926,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Sequence Header */}
-                <div className="mb-8 bg-white p-6 rounded-3xl border-2 border-pink-200 shadow-lg">
+                <div className="mb-8 bg-white p-6 rounded-xl border-2 border-cyan-200 shadow-lg">
                     <h2 className="text-3xl font-bold text-gray-800 mb-2">{processStructure.processName}</h2>
                     <p className="text-sm text-gray-600 mb-4">{processStructure.domain} • {t.processSteps}: {processStructure.suggestedSteps}</p>
                     <p className="text-gray-700 leading-relaxed text-sm">{processStructure.overviewText}</p>
@@ -941,10 +937,10 @@ const App: React.FC = () => {
                     {currentSequence.map((step, idx) => (
                         <div
                             key={idx}
-                            className="bg-white rounded-2xl border-2 border-pink-200 shadow-lg overflow-hidden hover:shadow-xl hover:scale-105 transition-all"
+                            className="bg-white rounded-xl border-2 border-cyan-200 shadow-lg overflow-hidden hover:shadow-xl hover:scale-105 transition-all"
                         >
                             {/* Step Badge */}
-                            <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between">
+                            <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between">
                                 <span>{step.title}</span>
                                 <span className="bg-white/30 px-2 py-1 rounded-full text-xs font-bold">{step.stepNumber}/{currentSequence.length}</span>
                             </div>
@@ -977,25 +973,25 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setAppState('input')}
-                                className="p-2 bg-pink-100 rounded-lg hover:bg-pink-200 transition-colors"
+                                className="p-2 bg-cyan-100 rounded-lg hover:bg-cyan-200 transition-colors"
                             >
-                                <ArrowLeft className="w-5 h-5 text-pink-600" />
+                                <ArrowLeft className="w-5 h-5 text-cyan-600" />
                             </button>
                             <h2 className="text-3xl font-bold text-gray-800">{t.galleryTitle}</h2>
                         </div>
                     </div>
 
                     {/* Filter Toolbar */}
-                    <div className="bg-white border-2 border-pink-200 rounded-2xl p-3 flex flex-col md:flex-row gap-3 shadow-lg">
+                    <div className="bg-white border-2 border-cyan-200 rounded-xl p-3 flex flex-col md:flex-row gap-3 shadow-lg">
                         {/* Search Input */}
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
                             <input
                                 type="text"
                                 value={gallerySearchQuery}
                                 onChange={(e) => setGallerySearchQuery(e.target.value)}
                                 placeholder={t.searchGalleryPlaceholder}
-                                className="w-full bg-white border-2 border-pink-200 rounded-xl py-2 pl-9 pr-4 text-sm text-gray-800 focus:outline-none focus:bg-pink-50 focus:border-pink-400 transition-all"
+                                className="w-full bg-white border-2 border-cyan-200 rounded-xl py-2 pl-9 pr-4 text-sm text-gray-800 focus:outline-none focus:bg-cyan-50 focus:border-cyan-400 transition-all"
                             />
                         </div>
 
@@ -1051,7 +1047,7 @@ const App: React.FC = () => {
 
                 {isLoadingGallery ? (
                     <div className="flex justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
                     </div>
                 ) : filteredGallery.length > 0 ? (
                     <GalleryGrid
@@ -1061,15 +1057,15 @@ const App: React.FC = () => {
                     />
                 ) : (
                     /* No Results State */
-                    <div className="flex flex-col items-center justify-center py-20 text-center border-4 border-dashed border-pink-300 rounded-3xl bg-pink-50">
-                        <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
-                            <Filter className="w-8 h-8 text-pink-500 opacity-70" />
+                    <div className="flex flex-col items-center justify-center py-20 text-center border-4 border-dashed border-cyan-300 rounded-xl bg-cyan-50">
+                        <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
+                            <Filter className="w-8 h-8 text-cyan-500 opacity-70" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">{t.noResultsTitle}</h3>
                         <p className="text-gray-600 max-w-sm">{t.noResultsDesc}</p>
                         <button
                             onClick={clearFilters}
-                            className="mt-6 px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-xl text-sm font-bold transition-all"
+                            className="mt-6 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-xl text-sm font-bold transition-all"
                         >
                             {t.btnResetFilters}
                         </button>

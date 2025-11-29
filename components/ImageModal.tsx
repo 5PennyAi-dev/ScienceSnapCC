@@ -151,7 +151,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                <div className="relative max-w-full max-h-full group w-full h-full flex items-center justify-center">
                   {isEditing && (
                       <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10 rounded-lg">
-                           <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mb-4"></div>
+                           <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent mb-4"></div>
                            <p className="text-white font-bold">{labels.applyingMagic} ✨</p>
                       </div>
                   )}
@@ -167,7 +167,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                       {currentStepIndex > 0 && (
                         <button
                           onClick={handlePrevStep}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
                           title="Previous Step"
                         >
                           <ChevronLeft className="w-5 h-5" />
@@ -176,7 +176,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                       {currentStepIndex < item.steps.length - 1 && (
                         <button
                           onClick={handleNextStep}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
                           title="Next Step"
                         >
                           <ChevronRight className="w-5 h-5" />
@@ -187,7 +187,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
 
                   {/* Step Indicator */}
                   {isSequence && item.steps && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 px-4 py-2 rounded-full shadow-lg border-2 border-pink-300">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 px-4 py-2 rounded-full shadow-lg border-2 border-cyan-300">
                       <p className="text-xs font-bold text-gray-800">Step {currentStepIndex + 1} / {item.steps.length}</p>
                     </div>
                   )}
@@ -195,7 +195,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                   {/* Full Screen Toggle */}
                   <button
                     onClick={() => setIsFullScreen(true)}
-                    className="absolute top-4 right-4 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                    className="absolute top-4 right-4 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
                     title={labels.btnFullScreen}
                   >
                     <Maximize className="w-5 h-5" />
@@ -204,28 +204,28 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
           </div>
 
           {/* Controls Section */}
-          <div className="w-full md:w-96 p-6 flex flex-col border-l-4 border-pink-300 bg-gradient-to-b from-white to-pink-50">
+          <div className="w-full md:w-96 p-6 flex flex-col border-l-4 border-cyan-300 bg-gradient-to-b from-white to-cyan-50">
             <div className="flex justify-between items-center mb-6">
                <h2 className="text-2xl font-bold text-gray-800">{labels.modalDetails}</h2>
-               <button onClick={onClose} className="p-2 hover:bg-pink-100 rounded-full transition-colors">
-                 <X className="w-6 h-6 text-pink-600" />
+               <button onClick={onClose} className="p-2 hover:bg-cyan-100 rounded-full transition-colors">
+                 <X className="w-6 h-6 text-cyan-600" />
                </button>
             </div>
 
             <div className="mb-6 space-y-4 overflow-y-auto flex-1">
               <div>
-                  <h3 className="text-xs uppercase tracking-wider text-pink-600 font-bold mb-1">{labels.modalDomain}</h3>
+                  <h3 className="text-xs uppercase tracking-wider text-cyan-600 font-bold mb-1">{labels.modalDomain}</h3>
                   <p className="text-gray-700 text-sm font-medium">{item.fact.domain}</p>
               </div>
               <div>
-                  <h3 className="text-xs uppercase tracking-wider text-purple-600 font-bold mb-1">{labels.modalTitle}</h3>
+                  <h3 className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-1">{labels.modalTitle}</h3>
                   <p className="text-gray-800 text-lg font-bold">{item.fact.title}</p>
               </div>
 
               {/* Sequence Step Info */}
               {isSequence && currentStep && (
-                <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-3 rounded-lg border-2 border-purple-300">
-                  <h3 className="text-xs uppercase tracking-wider text-purple-700 font-bold mb-1">📍 {currentStep.title}</h3>
+                <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-3 rounded-lg border-2 border-blue-300">
+                  <h3 className="text-xs uppercase tracking-wider text-blue-700 font-bold mb-1">📍 {currentStep.title}</h3>
                   <p className="text-gray-700 text-xs leading-relaxed">{currentStep.description}</p>
                 </div>
               )}
@@ -239,8 +239,8 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                       onClick={() => setCurrentStepIndex(idx)}
                       className={`flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all ${
                         idx === currentStepIndex
-                          ? 'border-pink-500 scale-110'
-                          : 'border-gray-300 hover:border-pink-400'
+                          ? 'border-cyan-500 scale-110'
+                          : 'border-gray-300 hover:border-cyan-400'
                       }`}
                     >
                       <img
@@ -256,12 +256,12 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
               {/* Metadata Chips - Colorful */}
               <div className="flex flex-wrap gap-2 pt-2">
                   {item.audience && (
-                      <span className="px-3 py-1 bg-pink-100 border border-pink-400 rounded-full text-xs text-pink-700 font-bold">
+                      <span className="px-3 py-1 bg-cyan-100 border border-cyan-400 rounded-full text-xs text-cyan-700 font-bold">
                           👶 {item.audience}
                       </span>
                   )}
                   {item.style && (
-                      <span className="px-3 py-1 bg-purple-100 border border-purple-400 rounded-full text-xs text-purple-700 font-bold">
+                      <span className="px-3 py-1 bg-blue-100 border border-blue-400 rounded-full text-xs text-blue-700 font-bold">
                           🎨 {item.style}
                       </span>
                   )}
@@ -288,13 +288,13 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
               </div>
 
               <div className="pt-2">
-                  <h3 className="text-xs uppercase tracking-wider text-purple-600 font-bold mb-2">{labels.modalFact}</h3>
+                  <h3 className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-2">{labels.modalFact}</h3>
                   <p className="text-gray-700 text-sm leading-relaxed">{item.fact.text}</p>
               </div>
             </div>
 
             <div className="mt-auto space-y-3 pt-4">
-               <div className="p-4 bg-white rounded-2xl border-2 border-pink-300 shadow-md">
+               <div className="p-4 bg-white rounded-2xl border-2 border-cyan-300 shadow-md">
                   <label className="block text-sm font-bold text-gray-700 mb-2">✨ {labels.modalEditLabel}</label>
                   <div className="flex gap-2">
                       <input
@@ -302,13 +302,13 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                           value={editPrompt}
                           onChange={(e) => setEditPrompt(e.target.value)}
                           placeholder={labels.placeholderEdit}
-                          className="flex-1 bg-white border-2 border-pink-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          className="flex-1 bg-white border-2 border-cyan-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
                           onKeyDown={(e) => e.key === 'Enter' && handleEdit()}
                       />
                       <button
                           onClick={handleEdit}
                           disabled={isEditing || !editPrompt.trim()}
-                          className="p-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
+                          className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
                           title="Apply Edit"
                       >
                           {isEditing ? <RefreshCcw className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
@@ -344,7 +344,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
         <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center animate-in fade-in duration-200">
            <button
              onClick={() => setIsFullScreen(false)}
-             className="absolute top-6 right-6 p-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg text-white rounded-full transition-all z-50 shadow-lg"
+             className="absolute top-6 right-6 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full transition-all z-50 shadow-lg"
              title={labels.exitFullScreen}
            >
              <Minimize className="w-6 h-6" />

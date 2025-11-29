@@ -8,14 +8,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        /* Primary Colors - Vibrant & Playful */
-        --color-primary: #FF6B9D;        /* Hot Pink */
-        --color-secondary: #4ECDC4;      /* Turquoise */
-        --color-accent-1: #FFE66D;       /* Sunny Yellow */
-        --color-accent-2: #95E1D3;       /* Mint Green */
-        --color-accent-3: #F38181;       /* Coral */
-        --color-accent-4: #AA96DA;       /* Lavender */
-        --color-accent-5: #FFA07A;       /* Light Salmon */
+        /* Primary Colors - Science-Focused & Modern */
+        --color-primary: #0EA5E9;        /* Cyan (Science) */
+        --color-secondary: #14B8A6;      /* Teal (Labs & Biology) */
+        --color-accent-1: #FCD34D;       /* Solar Yellow (Energy) */
+        --color-accent-2: #34D399;       /* Mint Green (Chemistry) */
+        --color-accent-3: #FB923C;       /* Coral Orange (Warmth) */
+        --color-accent-4: #8B5CF6;       /* Purple Tech (Innovation) */
+        --color-accent-5: #06B6D4;       /* Cyan Bright (Energy) */
 
         /* Background & Surfaces */
         --bg-primary: #FFFFFF;
@@ -23,14 +23,14 @@
         --bg-overlay: rgba(255, 255, 255, 0.9);
 
         /* Text */
-        --text-primary: #2D3748;         /* Dark gray */
-        --text-secondary: #4A5568;       /* Medium gray */
-        --text-light: #718096;           /* Light gray */
+        --text-primary: #0F172A;         /* Dark blue-gray */
+        --text-secondary: #334155;       /* Medium blue-gray */
+        --text-light: #64748B;           /* Light blue-gray */
       }
 
       body {
         font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+        background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 25%, #14B8A6 50%, #06B6D4 75%, #3B82F6 100%);
         background-attachment: fixed;
         position: relative;
       }
@@ -48,9 +48,9 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle at 20% 50%, rgba(255, 107, 157, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(78, 205, 196, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 40% 80%, rgba(255, 230, 109, 0.05) 0%, transparent 50%);
+        background: radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(20, 184, 166, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
         pointer-events: none;
         z-index: -1;
         animation: float 20s ease-in-out infinite;
@@ -63,7 +63,7 @@
         top: 10%;
         left: 5%;
         font-size: 2rem;
-        opacity: 0.3;
+        opacity: 0.15;
         pointer-events: none;
         z-index: 0;
         animation: twinkle 3s ease-in-out infinite;
@@ -77,11 +77,11 @@
         background: rgba(255, 255, 255, 0.1);
       }
       ::-webkit-scrollbar-thumb {
-        background: linear-gradient(to bottom, #FF6B9D, #4ECDC4);
+        background: linear-gradient(to bottom, #0EA5E9, #14B8A6);
         border-radius: 5px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(to bottom, #FF6B9D, #4ECDC4);
+        background: linear-gradient(to bottom, #0EA5E9, #14B8A6);
         opacity: 0.8;
       }
 
@@ -101,7 +101,7 @@
         bottom: 10%;
         right: 5%;
         font-size: 1.8rem;
-        opacity: 0.25;
+        opacity: 0.15;
         pointer-events: none;
         z-index: 0;
         animation: twinkle 4s ease-in-out infinite;
@@ -115,7 +115,7 @@
         top: 50%;
         right: 10%;
         font-size: 1.5rem;
-        opacity: 0.2;
+        opacity: 0.15;
         pointer-events: none;
         z-index: 0;
         animation: float 25s ease-in-out infinite;
@@ -163,10 +163,10 @@
 
       @keyframes pulse-glow {
         0%, 100% {
-          box-shadow: 0 0 0 0 rgba(255, 107, 157, 0.7);
+          box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
         }
         50% {
-          box-shadow: 0 0 0 10px rgba(255, 107, 157, 0);
+          box-shadow: 0 0 0 10px rgba(14, 165, 233, 0);
         }
       }
 
@@ -208,7 +208,7 @@
 }
 </script>
 </head>
-  <body class="text-gray-800 antialiased selection:bg-pink-400 selection:text-white">
+  <body class="text-gray-800 antialiased selection:bg-cyan-400 selection:text-white">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
     

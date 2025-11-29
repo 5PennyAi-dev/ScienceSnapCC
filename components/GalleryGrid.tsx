@@ -8,24 +8,24 @@ interface GalleryGridProps {
   emptyMessage: string;
 }
 
-// Color palette for card borders
+// Color palette for card borders - Science-focused
 const borderColors = [
-  'border-pink-400',
-  'border-cyan-400',
-  'border-yellow-400',
-  'border-purple-400',
-  'border-green-400',
-  'border-orange-400',
-  'border-indigo-400',
-  'border-rose-400',
+  'border-cyan-500',
+  'border-teal-500',
+  'border-blue-500',
+  'border-indigo-500',
+  'border-sky-500',
+  'border-emerald-500',
+  'border-violet-500',
+  'border-cyan-600',
 ];
 
 export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, emptyMessage }) => {
   if (items.length === 0) {
     return (
-      <div className="text-center py-24 bg-white border-4 border-dashed border-pink-300 rounded-3xl flex flex-col items-center shadow-lg">
-        <div className="w-20 h-20 bg-gradient-to-br from-pink-200 to-purple-200 rounded-full flex items-center justify-center mb-4 shadow-md">
-            <Rocket className="w-10 h-10 text-pink-600 animate-bounce-light" />
+      <div className="text-center py-24 bg-white border-4 border-dashed border-cyan-300 rounded-xl flex flex-col items-center shadow-lg">
+        <div className="w-20 h-20 bg-gradient-to-br from-cyan-200 to-blue-200 rounded-full flex items-center justify-center mb-4 shadow-md">
+            <Rocket className="w-10 h-10 text-cyan-600 animate-bounce-light" />
         </div>
         <p className="text-gray-700 font-bold text-lg">🎉 {emptyMessage} 🎉</p>
         <p className="text-gray-500 text-sm mt-2">Create your first infographic to see it here!</p>
@@ -66,7 +66,7 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, em
                   ))}
                 </div>
                 {/* Step Count Badge */}
-                <div className="absolute top-2 right-2 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white">
+                <div className="absolute top-2 right-2 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white">
                   {item.totalSteps} steps
                 </div>
                 {/* Hover Overlay */}
@@ -88,13 +88,13 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, em
 
             {/* Info Section */}
             <div>
-              <h4 className="text-gray-800 font-bold text-sm line-clamp-2 group-hover:text-pink-600 transition-colors">{item.fact.title}</h4>
+              <h4 className="text-gray-800 font-bold text-sm line-clamp-2 group-hover:text-cyan-600 transition-colors">{item.fact.title}</h4>
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span className={`${borderColor.replace('border-', 'bg-')} text-white text-xs font-bold px-2 py-1 rounded-full`}>
                   {item.fact.domain}
                 </span>
                 {isSequence && (
-                  <span className="bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                     Sequence
                   </span>
                 )}
