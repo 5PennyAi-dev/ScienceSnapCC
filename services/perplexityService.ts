@@ -189,12 +189,33 @@ export const researchProcessForEducation = async (
     const responseContent = response.choices[0].message.content;
 
     try {
-      // Try to parse as JSON
-      researchData = JSON.parse(responseContent);
+      // Try to extract JSON from the response (handle markdown code blocks)
+      let jsonString = responseContent.trim();
+
+      // Remove markdown code blocks if present (handle various formats)
+      // Match ```json ... ``` or ``` ... ```
+      const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        jsonString = codeBlockMatch[1].trim();
+        console.log('[Perplexity Research] Extracted JSON from code block');
+      }
+
+      // Try to find JSON object in the response (handle malformed JSON with extra text)
+      // Find the first { and last }
+      const firstBrace = jsonString.indexOf('{');
+      const lastBrace = jsonString.lastIndexOf('}');
+
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+        console.log('[Perplexity Research] Extracted JSON object from response');
+      }
+
+      researchData = JSON.parse(jsonString);
       console.log('[Perplexity Research] ✓ Successfully parsed research data');
     } catch (parseError) {
       console.warn('[Perplexity Research] Failed to parse JSON response, using defaults');
-      console.warn('Response was:', responseContent.substring(0, 200));
+      console.warn('Parse error:', parseError instanceof Error ? parseError.message : String(parseError));
+      console.warn('Response was:', responseContent.substring(0, 300));
       researchData = {};
     }
 

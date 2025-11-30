@@ -68,18 +68,19 @@ Each mode has a suggestion dropdown that helps users discover interesting topics
 #### Single Fact/Concept Pipeline
 For facts and concepts, the generation pipeline follows these steps:
 1. **Fact Generation** (gemini-2.5-flash): Creates scientifically accurate, age-appropriate content
-2. **Research Enhancement** (Perplexity sonar-pro, Explore Domain only): Researches the selected fact for scientific details, visual metaphors, analogies, and common misconceptions
+2. **Research Enhancement** (Perplexity sonar-pro): Researches the selected fact for scientific details, visual metaphors, analogies, and common misconceptions (Explore Domain & Explain Concept modes)
 3. **Visual Planning** (gemini-2.5-flash): Generates a detailed design specification enriched with research context
-4. **Image Rendering** (gemini-3-pro-image-preview): Generates high-fidelity 3:4 infographic based on the plan
+4. **Image Rendering** (gemini-3-pro-image-preview): Generates high-fidelity infographic based on the plan
 
 #### Process/Sequence Pipeline
 For processes, the generation is sequential for each step:
 1. **Process Structure Discovery** (gemini-2.5-flash): Identifies process name, domain, overview text, and step titles
-2. **For each step** (sequential):
+2. **Research Enhancement** (Perplexity sonar-pro): Researches the process for scientific accuracy, recommended step breakdown, visual guidance, and misconceptions
+3. **For each step** (sequential):
    - **Step Explanation** (gemini-2.5-flash): Detailed description and key events for the step
-   - **Step Visual Plan** (gemini-2.5-flash): Design specification for the step visualization
+   - **Step Visual Plan** (gemini-2.5-flash): Design specification for the step visualization, enriched with research context (accuracy guidelines, step breakdown, visual approaches, misconceptions to avoid, analogies)
    - **Step Image** (gemini-3-pro-image-preview, 120s timeout): Renders high-quality step infographic
-3. All steps collected into `InfographicStep[]` array and stored as a sequence
+4. All steps collected into `InfographicStep[]` array and stored as a sequence
 
 All generated infographics (single images and sequences) are stored in InstantDB and displayed in a filterable gallery. Users can view details, edit images via natural language prompts (per-step for sequences), or download them.
 
@@ -95,6 +96,7 @@ All generated infographics (single images and sequences) are stored in InstantDB
 - **UI State**: `appState` (tracks screens: input → selection → planning → generating → result → gallery)
 - **Gallery Filters**: `filterDomain`, `filterAudience`, `filterStyle`, `filterLanguage`, `gallerySearchQuery`
 - **Configuration State**: `language`, `audience`, `imageModel`, `aspectRatio`, `artStyle`
+  - **Aspect Ratio Options**: 1:1 (Square), 3:4 (Portrait), 4:5 (Instagram), 4:3 (Landscape), 9:16 (Tall)
 - **Error State**: `error`, `isCheckingKey`, `hasApiKey`
 - **Database Query**: Uses `db.useQuery()` to reactively fetch infographics from InstantDB
 
@@ -201,6 +203,11 @@ InstantDB schema stores infographics with:
   - `plan`: Step-specific visual design specification
   - `imageUrl`: Base64-encoded step image
 - `totalSteps`: Total number of steps in sequence
+- `processResearch`: Optional Perplexity research data for the process (accuracy findings, step breakdown, visual guidance, misconceptions, analogies)
+
+#### Research Fields
+- `research`: Perplexity research data for single facts/concepts (Explore Domain & Explain Concept modes)
+- `processResearch`: Perplexity research data for process sequences (Process/Sequence mode)
 
 #### Metadata (Both)
 - `aspectRatio`, `style`, `audience`, `modelName`, `language`: Generation metadata
@@ -311,10 +318,12 @@ When process generation fails:
 
 ## Perplexity Research Integration
 
-The app uses Perplexity API to enhance infographic generation with real-time web research in "Explore Domain" mode.
+The app uses Perplexity API to enhance infographic generation with real-time web research across all modes: Explore Domain, Explain Concept, and Process/Sequence.
 
 ### How It Works
-1. When user selects a fact in Explore Domain mode, `researchFactForInfographic()` is called
+
+#### Single Facts/Concepts (Explore Domain & Explain Concept modes)
+1. When user selects or generates a fact/concept, `researchFactForInfographic()` is called
 2. Perplexity API researches the fact and returns structured data:
    - **scientificDetails**: 3-5 specific scientific facts about the topic
    - **visualMetaphors**: 2-3 ways to visually represent the concept
@@ -322,7 +331,19 @@ The app uses Perplexity API to enhance infographic generation with real-time web
    - **misconceptions**: 1-2 common wrong beliefs to avoid
 3. Research results are formatted into a context string and passed to `generateInfographicPlan()`
 4. The enriched plan produces more accurate and educational infographics
-5. Research data is saved to the database alongside the infographic
+5. Research data is saved to the database under `research` field
+
+#### Processes/Sequences (Process/Sequence mode)
+1. After process structure is discovered, `researchProcessForEducation()` is called
+2. Perplexity API researches the process and returns:
+   - **accuracy.findings**: Scientific accuracy principles and mechanisms
+   - **stepBreakdown.steps**: Recommended educational step breakdown from research
+   - **visualGuidance.descriptions**: How the process is typically visualized in educational materials
+   - **misconceptions**: Common misunderstandings about the process
+   - **analogies**: Age-appropriate comparisons to explain the process
+3. Research results are formatted and injected into each step's plan generation
+4. All steps benefit from the same scientific foundation and pedagogical guidance
+5. Research data is saved to the database under `processResearch` field
 
 ### Configuration
 - **API Key**: Set `PERPLEXITY_API_KEY` in `.env.local`
@@ -331,13 +352,22 @@ The app uses Perplexity API to enhance infographic generation with real-time web
 
 ### Graceful Degradation
 - If `PERPLEXITY_API_KEY` is not set or API fails, generation continues without research context
-- `researchFactForInfographic()` returns empty data with `error` field set
+- Research functions return empty data with `error` field set
 - The app functions normally, just without research enrichment
 
 ### Key Functions
-- `researchFactForInfographic()` in perplexityService.ts: Main research function
-- `buildFactResearchPrompt()`: Constructs the research prompt
-- `generateInfographicPlan()` accepts optional `researchContext` parameter
+- `researchFactForInfographic()` in perplexityService.ts: Research for facts/concepts with robust JSON parsing
+- `researchProcessForEducation()` in perplexityService.ts: Research for processes with step breakdown
+- `buildFactResearchPrompt()`: Constructs the research prompt for facts
+- `buildResearchPrompt()`: Constructs the research prompt for processes
+- `generateInfographicPlan()` accepts optional `researchContext` parameter for single facts
+- `generateStepInfographicPlan()` accepts optional `processResearch` parameter for process steps
+
+### JSON Parsing Robustness
+Both research functions handle Perplexity API responses that may be wrapped in markdown code blocks:
+- Extracts JSON from ```json...``` code blocks if present
+- Falls back to finding first `{` and last `}` for malformed responses
+- Gracefully degradates to empty data on parse failure
 
 ## Key Files Reference
 

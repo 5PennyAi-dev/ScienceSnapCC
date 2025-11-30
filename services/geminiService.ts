@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle } from "../types";
+import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle, PerplexityResearchData } from "../types";
 import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, STYLE_CONFIG } from "../constants";
 
 const getAiClient = () => {
@@ -782,7 +782,8 @@ export const generateStepInfographicPlan = async (
   completedSteps: any[],
   lang: Language,
   audience: Audience,
-  style: ArtStyle
+  style: ArtStyle,
+  processResearch?: PerplexityResearchData
 ): Promise<string> => {
   const ai = getAiClient();
 
@@ -801,6 +802,39 @@ export const generateStepInfographicPlan = async (
     .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
 
   prompt = injectContext(prompt, audience, style);
+
+  // Inject research context if available
+  if (processResearch && !processResearch.error) {
+    const researchContextParts: string[] = [];
+
+    if (processResearch.accuracy.findings.length > 0) {
+      researchContextParts.push(`Scientific accuracy guidelines:\n- ${processResearch.accuracy.findings.join('\n- ')}`);
+    }
+    if (processResearch.stepBreakdown && processResearch.stepBreakdown.steps.length > 0) {
+      researchContextParts.push(`Recommended educational step breakdown:\n- ${processResearch.stepBreakdown.steps.join('\n- ')}`);
+    }
+    if (processResearch.visualGuidance.descriptions.length > 0) {
+      researchContextParts.push(`Visual representation approaches:\n- ${processResearch.visualGuidance.descriptions.join('\n- ')}`);
+    }
+    if (processResearch.misconceptions.length > 0) {
+      researchContextParts.push(`Common misconceptions to avoid:\n- ${processResearch.misconceptions.join('\n- ')}`);
+    }
+    if (processResearch.analogies.length > 0) {
+      researchContextParts.push(`Age-appropriate analogies:\n- ${processResearch.analogies.join('\n- ')}`);
+    }
+
+    if (researchContextParts.length > 0) {
+      const researchContext = researchContextParts.join('\n\n');
+      prompt += `\n\n**RESEARCH-ENHANCED CONTEXT (Use this to enhance accuracy and visual design):**\n${researchContext}`;
+      console.log('[Step Plan] Research context injected:', researchContext.substring(0, 300) + '...');
+    } else {
+      console.log('[Step Plan] No research context available (empty research data)');
+    }
+  } else if (processResearch?.error) {
+    console.log('[Step Plan] Research had errors, skipping context injection');
+  } else {
+    console.log('[Step Plan] No research data provided');
+  }
 
   try {
     const response = await withTimeout(

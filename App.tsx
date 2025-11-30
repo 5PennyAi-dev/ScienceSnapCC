@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData } from './types';
+import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData, PerplexityResearchData } from './types';
 import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, ConceptSuggestion, ProcessSuggestion } from './services/geminiService';
-import { researchFactForInfographic } from './services/perplexityService';
+import { researchFactForInfographic, researchProcessForEducation } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
 import { GalleryGrid } from './components/GalleryGrid';
@@ -48,6 +48,7 @@ const App: React.FC = () => {
   } | null>(null);
   const [currentSequence, setCurrentSequence] = useState<InfographicStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentProcessResearch, setCurrentProcessResearch] = useState<PerplexityResearchData | null>(null);
 
   // Concept Suggestions State (for Explain Concept mode)
   const [conceptSuggestions, setConceptSuggestions] = useState<ConceptSuggestion[]>([]);
@@ -332,6 +333,13 @@ const App: React.FC = () => {
       console.log(`[Process] Generated structure with ${structure.stepTitles.length} steps:`, structure.stepTitles);
       setProcessStructure(structure);
 
+      // Step 1b: Research the process for educational context
+      console.log("[Process] Researching process for enhanced context...");
+      setLoadingMessage(`${t.loadingResearching || "Researching"} (${query})...`);
+      const processResearch = await researchProcessForEducation(query, audience, language);
+      setCurrentProcessResearch(processResearch);
+      console.log("[Process] Research complete", processResearch.error ? "(with errors)" : "(successful)");
+
       // Step 2: Generate each step sequentially
       const steps: InfographicStep[] = [];
       let previousContext = structure.overviewText;
@@ -376,7 +384,8 @@ const App: React.FC = () => {
             steps,
             language,
             audience,
-            artStyle
+            artStyle,
+            processResearch || undefined
           );
           console.log(`[Step ${stepNum}] ✓ Visual plan generated (${stepPlan.length} chars)`);
 
@@ -452,6 +461,7 @@ const App: React.FC = () => {
       // Clear partial sequence on error
       setCurrentSequence([]);
       setProcessStructure(null);
+      setCurrentProcessResearch(null);
     } finally {
       setLoading(false);
     }
@@ -471,6 +481,7 @@ const App: React.FC = () => {
     setCurrentSequence([]);
     setProcessStructure(null);
     setCurrentResearch(null);
+    setCurrentProcessResearch(null);
 
     try {
       // Step 1: Research the fact using Perplexity (graceful fallback if API not available)
@@ -569,6 +580,11 @@ const App: React.FC = () => {
           modelName: imageModel,
           language: language
         };
+
+        // Include Perplexity research data if available
+        if (currentProcessResearch) {
+          (dataToSave as any).processResearch = currentProcessResearch;
+        }
 
         console.log('Sequence data to save:', dataToSave);
 
@@ -815,7 +831,7 @@ const App: React.FC = () => {
                     <div className="w-px h-4 bg-cyan-300"></div>
                     <button
                          onClick={() => {
-                             const ratios = [AspectRatio.SQUARE, AspectRatio.PORTRAIT, AspectRatio.LANDSCAPE, AspectRatio.TALL];
+                             const ratios = [AspectRatio.SQUARE, AspectRatio.PORTRAIT, AspectRatio.INSTAGRAM, AspectRatio.LANDSCAPE, AspectRatio.TALL];
                              const nextIdx = (ratios.indexOf(aspectRatio) + 1) % ratios.length;
                              setAspectRatio(ratios[nextIdx]);
                          }}
@@ -823,12 +839,14 @@ const App: React.FC = () => {
                          title={
                              aspectRatio === AspectRatio.SQUARE ? t.ratioSquare :
                              aspectRatio === AspectRatio.PORTRAIT ? t.ratioPortrait :
+                             aspectRatio === AspectRatio.INSTAGRAM ? '4:5 (Instagram)' :
                              aspectRatio === AspectRatio.LANDSCAPE ? t.ratioLandscape :
                              t.ratioTall
                          }
                     >
                         {aspectRatio === AspectRatio.SQUARE && <Square className="w-4 h-4" />}
                         {aspectRatio === AspectRatio.PORTRAIT && <RectangleVertical className="w-4 h-4" />}
+                        {aspectRatio === AspectRatio.INSTAGRAM && <RectangleVertical className="w-4 h-4 opacity-75" />}
                         {aspectRatio === AspectRatio.LANDSCAPE && <RectangleHorizontal className="w-4 h-4" />}
                         {aspectRatio === AspectRatio.TALL && <Smartphone className="w-4 h-4" />}
                     </button>

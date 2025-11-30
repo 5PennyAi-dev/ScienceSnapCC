@@ -23,8 +23,10 @@ export interface InfographicItem {
   isSequence?: boolean;
   steps?: InfographicStep[];
   totalSteps?: number;
-  // Perplexity research data (for Explore Domain mode)
+  // Perplexity research data (for Explore Domain and Concept modes)
   research?: FactResearchData;
+  // Perplexity research data (for Process/Sequence mode)
+  processResearch?: PerplexityResearchData;
   // Metadata fields
   aspectRatio?: AspectRatio;
   style?: ArtStyle;
@@ -40,6 +42,7 @@ export type SearchMode = 'domain' | 'concept' | 'process';
 export enum AspectRatio {
   SQUARE = '1:1',
   PORTRAIT = '3:4',
+  INSTAGRAM = '4:5',
   LANDSCAPE = '4:3',
   TALL = '9:16'
 }
