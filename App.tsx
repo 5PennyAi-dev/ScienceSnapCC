@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData } from './types';
-import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan } from './services/geminiService';
+import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, ConceptSuggestion, ProcessSuggestion } from './services/geminiService';
 import { researchFactForInfographic } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
@@ -10,6 +10,8 @@ import { ImageModal } from './components/ImageModal';
 import { StyleSelector } from './components/StyleSelector';
 import { FilterPill } from './components/FilterPill';
 import { DomainSelector } from './components/DomainSelector';
+import { ConceptSelector } from './components/ConceptSelector';
+import { ProcessSelector } from './components/ProcessSelector';
 import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle, X } from 'lucide-react';
 import { db } from './db';
 import { tx, id } from "@instantdb/react";
@@ -46,7 +48,17 @@ const App: React.FC = () => {
   } | null>(null);
   const [currentSequence, setCurrentSequence] = useState<InfographicStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  
+
+  // Concept Suggestions State (for Explain Concept mode)
+  const [conceptSuggestions, setConceptSuggestions] = useState<ConceptSuggestion[]>([]);
+  const [conceptSuggestionsLoading, setConceptSuggestionsLoading] = useState(false);
+  const [conceptSuggestionsCached, setConceptSuggestionsCached] = useState(false);
+
+  // Process Suggestions State (for Process/Sequence mode)
+  const [processSuggestions, setProcessSuggestions] = useState<ProcessSuggestion[]>([]);
+  const [processSuggestionsLoading, setProcessSuggestionsLoading] = useState(false);
+  const [processSuggestionsCached, setProcessSuggestionsCached] = useState(false);
+
   // Error State
   const [error, setError] = useState<string | null>(null);
 
@@ -160,6 +172,46 @@ const App: React.FC = () => {
       setError(`Database error: ${galleryError}`);
     }
   }, [galleryError]);
+
+  // Fetch concept suggestions when switching to concept mode
+  useEffect(() => {
+    if (searchMode === 'concept' && !conceptSuggestionsCached && !conceptSuggestionsLoading) {
+      const fetchSuggestions = async () => {
+        setConceptSuggestionsLoading(true);
+        try {
+          const suggestions = await generateConceptSuggestions(language, audience);
+          setConceptSuggestions(suggestions);
+          setConceptSuggestionsCached(true);
+        } catch (err) {
+          console.error("Failed to fetch concept suggestions:", err);
+          // Silently fail - suggestions are optional
+        } finally {
+          setConceptSuggestionsLoading(false);
+        }
+      };
+      fetchSuggestions();
+    }
+  }, [searchMode, conceptSuggestionsCached, conceptSuggestionsLoading, language, audience]);
+
+  // Fetch process suggestions when switching to process mode
+  useEffect(() => {
+    if (searchMode === 'process' && !processSuggestionsCached && !processSuggestionsLoading) {
+      const fetchSuggestions = async () => {
+        setProcessSuggestionsLoading(true);
+        try {
+          const suggestions = await generateProcessSuggestions(language, audience);
+          setProcessSuggestions(suggestions);
+          setProcessSuggestionsCached(true);
+        } catch (err) {
+          console.error("Failed to fetch process suggestions:", err);
+          // Silently fail - suggestions are optional
+        } finally {
+          setProcessSuggestionsLoading(false);
+        }
+      };
+      fetchSuggestions();
+    }
+  }, [searchMode, processSuggestionsCached, processSuggestionsLoading, language, audience]);
 
   // Progressive Loading Messages
   useEffect(() => {
@@ -815,6 +867,30 @@ const App: React.FC = () => {
                         <DomainSelector
                             onSelect={(domain) => setQuery(domain)}
                             language={language}
+                        />
+                    </div>
+                )}
+
+                {/* Concept Selector - only visible in concept mode */}
+                {searchMode === 'concept' && (
+                    <div className="mb-3 flex justify-start">
+                        <ConceptSelector
+                            onSelect={(concept) => setQuery(concept)}
+                            language={language}
+                            suggestions={conceptSuggestions}
+                            isLoading={conceptSuggestionsLoading}
+                        />
+                    </div>
+                )}
+
+                {/* Process Selector - only visible in process mode */}
+                {searchMode === 'process' && (
+                    <div className="mb-3 flex justify-start">
+                        <ProcessSelector
+                            onSelect={(process) => setQuery(process)}
+                            language={language}
+                            suggestions={processSuggestions}
+                            isLoading={processSuggestionsLoading}
                         />
                     </div>
                 )}

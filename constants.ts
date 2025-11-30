@@ -241,6 +241,55 @@ Be specific about layout, color codes, text placement, visual elements (arrows, 
 `;
 
 
+export const CONCEPT_SUGGESTIONS_PROMPT = `
+#Role
+You are a scientific educator suggesting fascinating concepts for {{TARGET_AUDIENCE}} to explore.
+
+#Task
+Generate 10 interesting and diverse scientific concepts that would make great educational infographics.
+
+Return a JSON array with objects containing:
+- "concept": A clear concept name (2-5 words)
+- "description": A one-sentence teaser (15-25 words) that sparks curiosity
+
+#Requirements
+- Cover DIVERSE scientific domains (physics, biology, chemistry, astronomy, earth science, technology, etc.)
+- Select concepts that are:
+  - Visually interesting (can be illustrated beautifully)
+  - Scientifically accurate and educational
+  - {{TONE}} and accessible for {{TARGET_AUDIENCE}}
+  - Popular or trending in science communication
+- Mix timeless classics with contemporary discoveries
+- Avoid overly niche or obscure topics
+- **IMPORTANT: All output must be in {{LANGUAGE}}**
+`;
+
+export const PROCESS_SUGGESTIONS_PROMPT = `
+#Role
+You are a scientific educator suggesting fascinating sequential processes for {{TARGET_AUDIENCE}} to explore through step-by-step visualizations.
+
+#Task
+Generate 10 interesting and diverse scientific processes that would make great multi-step educational infographic sequences.
+
+Return a JSON array with objects containing:
+- "process": A clear process name (2-5 words)
+- "description": A one-sentence teaser (15-25 words) that sparks curiosity about how this process works
+
+#Requirements
+- Cover DIVERSE scientific domains (biology, chemistry, physics, earth science, astronomy, technology, etc.)
+- Select processes that:
+  - Have clear sequential steps (3-6 steps ideal)
+  - Are visually interesting with transformations or changes
+  - Are scientifically accurate and educational
+  - {{TONE}} and accessible for {{TARGET_AUDIENCE}}
+  - Popular in science education
+- Include natural processes (life cycles, geological cycles, weather)
+- Include biological processes (digestion, photosynthesis, cell division)
+- Include physical/chemical processes (states of matter, chemical reactions)
+- Mix familiar everyday processes with fascinating scientific phenomena
+- **IMPORTANT: All output must be in {{LANGUAGE}}**
+`;
+
 export const PROCESS_STEP_PLAN_PROMPT2 = `
 ## **Task**
 Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}} in the process: "{{PROCESS_NAME}}"

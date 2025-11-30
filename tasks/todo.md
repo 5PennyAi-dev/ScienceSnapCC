@@ -132,3 +132,109 @@ The research should focus on:
 ### Graceful Degradation
 - If `PERPLEXITY_API_KEY` is not set or API fails, the app continues without research context
 - `researchFactForInfographic()` returns empty data with `error` field set
+
+---
+
+# Feature: Concept Suggestions for Explain Concept Mode
+
+## Overview
+Added a dropdown with AI-generated concept suggestions to the "Explain Concept" mode, mirroring the existing DomainSelector pattern. Suggestions are generated once when the user clicks the "Explain Concept" tab and cached for the session. Suggestions are tailored to the selected audience (young vs adult).
+
+## Completed Tasks
+
+- [x] Add CONCEPT_SUGGESTIONS_PROMPT to constants.ts
+- [x] Add generateConceptSuggestions() to geminiService.ts
+- [x] Create ConceptSelector.tsx component
+- [x] Add translations to translations.ts (EN/FR)
+- [x] Integrate ConceptSelector into App.tsx
+
+## Review
+
+### Changes Made
+
+**1. constants.ts**
+- Added `CONCEPT_SUGGESTIONS_PROMPT` template that generates 10 diverse scientific concepts tailored to the audience (young/adult) and language (EN/FR)
+
+**2. services/geminiService.ts**
+- Added `ConceptSuggestion` interface (concept + description)
+- Added `generateConceptSuggestions()` function using TEXT_MODEL (gemini-2.5-flash) with JSON schema for structured responses
+
+**3. components/ConceptSelector.tsx** (NEW FILE)
+- New component mirroring DomainSelector pattern
+- Shows dropdown with concept name + teaser description
+- Loading state while fetching
+- Click-outside detection to close
+
+**4. translations.ts**
+- Added EN/FR translations for:
+  - `conceptSuggestionsTitle`: "Suggested Concepts" / "Concepts suggérés"
+  - `conceptSuggestionsLoading`: "Loading suggestions..." / "Chargement des suggestions..."
+  - `conceptSuggestionsHeader`: "Popular science concepts" / "Concepts scientifiques populaires"
+
+**5. App.tsx**
+- Added state: `conceptSuggestions`, `conceptSuggestionsLoading`, `conceptSuggestionsCached`
+- Added useEffect to fetch suggestions when "Explain Concept" tab is clicked (cached for session)
+- Rendered ConceptSelector when `searchMode === 'concept'`
+
+### How It Works
+1. User clicks "Explain Concept" tab
+2. App fetches 10 concept suggestions from Gemini (cached for session)
+3. User sees dropdown with suggestions (name + teaser description)
+4. Clicking a suggestion auto-fills the search input
+5. User can still type their own concept instead
+
+### Build Status
+Build compiles successfully with no TypeScript errors.
+
+---
+
+# Feature: Process Suggestions for Process/Sequence Mode
+
+## Overview
+Added a dropdown with AI-generated process suggestions to the "Process/Sequence" mode, following the same pattern as the Concept Suggestions feature. Suggestions are generated once when the user clicks the "Process/Sequence" tab and cached for the session. Suggestions are tailored to the selected audience (young vs adult).
+
+## Completed Tasks
+
+- [x] Add PROCESS_SUGGESTIONS_PROMPT to constants.ts
+- [x] Add generateProcessSuggestions() to geminiService.ts
+- [x] Create ProcessSelector.tsx component
+- [x] Add translations to translations.ts (EN/FR)
+- [x] Integrate ProcessSelector into App.tsx
+
+## Review
+
+### Changes Made
+
+**1. constants.ts**
+- Added `PROCESS_SUGGESTIONS_PROMPT` template that generates 10 diverse scientific processes (life cycles, geological cycles, biological processes, etc.) tailored to the audience and language
+
+**2. services/geminiService.ts**
+- Added `ProcessSuggestion` interface (process + description)
+- Added `generateProcessSuggestions()` function using TEXT_MODEL (gemini-2.5-flash) with JSON schema for structured responses
+
+**3. components/ProcessSelector.tsx** (NEW FILE)
+- New component mirroring ConceptSelector/DomainSelector pattern
+- Shows dropdown with process name + teaser description
+- Loading state while fetching
+- Click-outside detection to close
+
+**4. translations.ts**
+- Added EN/FR translations for:
+  - `processSuggestionsTitle`: "Suggested Processes" / "Processus suggérés"
+  - `processSuggestionsLoading`: "Loading suggestions..." / "Chargement des suggestions..."
+  - `processSuggestionsHeader`: "Popular science processes" / "Processus scientifiques populaires"
+
+**5. App.tsx**
+- Added state: `processSuggestions`, `processSuggestionsLoading`, `processSuggestionsCached`
+- Added useEffect to fetch suggestions when "Process/Sequence" tab is clicked (cached for session)
+- Rendered ProcessSelector when `searchMode === 'process'`
+
+### How It Works
+1. User clicks "Process/Sequence" tab
+2. App fetches 10 process suggestions from Gemini (cached for session)
+3. User sees dropdown with process name + teaser description
+4. Clicking a suggestion auto-fills the search input
+5. User can still type their own process instead
+
+### Build Status
+Build compiles successfully with no TypeScript errors.

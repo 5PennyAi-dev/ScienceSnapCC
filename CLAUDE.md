@@ -57,8 +57,13 @@ npm run preview
 The application has three main discovery modes:
 
 1. **Explore Domain**: User selects a scientific field from a dropdown (12 predefined domains) or types a custom domain → Gemini generates 3 interesting facts in that domain
-2. **Explain Concept**: User enters a specific concept (e.g., "Black Holes") → Gemini provides a deep-dive explanation
-3. **Process/Sequence**: User enters a process (e.g., "Photosynthesis", "Water Cycle") → Gemini generates 4-6 sequential steps with visualizations
+2. **Explain Concept**: User selects from AI-generated concept suggestions or enters a specific concept (e.g., "Black Holes") → Gemini provides a deep-dive explanation
+3. **Process/Sequence**: User selects from AI-generated process suggestions or enters a process (e.g., "Photosynthesis", "Water Cycle") → Gemini generates 4-6 sequential steps with visualizations
+
+Each mode has a suggestion dropdown that helps users discover interesting topics:
+- **Explore Domain**: Static list of 12 predefined scientific domains (DomainSelector)
+- **Explain Concept**: AI-generated list of 10 concepts tailored to audience (ConceptSelector)
+- **Process/Sequence**: AI-generated list of 10 processes tailored to audience (ProcessSelector)
 
 #### Single Fact/Concept Pipeline
 For facts and concepts, the generation pipeline follows these steps:
@@ -109,6 +114,12 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
 - `editGeneratedImage()`: Refines images via natural language prompts
 - `retryWithBackoff()`: Handles 503/429 errors with exponential backoff
 
+#### Suggestion Functions
+- `generateConceptSuggestions()`: Generates 10 diverse scientific concepts tailored to audience (young/adult) and language
+- `generateProcessSuggestions()`: Generates 10 diverse scientific processes tailored to audience and language
+- Both return arrays with `{ concept/process: string, description: string }` objects
+- Uses TEXT_MODEL (gemini-2.5-flash) for cost efficiency with JSON schema validation
+
 #### Process/Sequence Functions
 - `generateProcessStructure()`: Discovers process steps and structure (4-6 steps, titles, overview)
 - `generateStepExplanation()`: Generates detailed text explanation for a single step
@@ -142,6 +153,16 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
   - Bilingual support (EN/FR) via translations
   - Selecting a domain auto-fills the search input
   - Users can still type custom domains
+- **ConceptSelector.tsx**: Dropdown for AI-generated concept suggestions in "Explain Concept" mode
+  - Fetches 10 concepts from Gemini when tab is clicked (cached for session)
+  - Shows concept name + teaser description
+  - Tailored to selected audience (simpler for kids, complex for adults)
+  - Loading state while fetching
+- **ProcessSelector.tsx**: Dropdown for AI-generated process suggestions in "Process/Sequence" mode
+  - Fetches 10 processes from Gemini when tab is clicked (cached for session)
+  - Shows process name + teaser description
+  - Tailored to selected audience
+  - Loading state while fetching
 
 ### Configuration & Prompts
 
@@ -152,6 +173,7 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
 - Prompt templates:
   - Single mode: FACT_GENERATION_PROMPT, CONCEPT_EXPLANATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT
   - Process mode: PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT
+  - Suggestion mode: CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT
 
 Prompts use `{{PLACEHOLDER}}` syntax which gets replaced by `injectContext()` based on audience and style. Process prompts additionally use:
 - `{{PROCESS}}`: The process name entered by user
@@ -328,3 +350,5 @@ The app uses Perplexity API to enhance infographic generation with real-time web
 - [db.ts](db.ts) - InstantDB initialization
 - [components/](components/) - Reusable UI components
 - [components/DomainSelector.tsx](components/DomainSelector.tsx) - Domain selection dropdown
+- [components/ConceptSelector.tsx](components/ConceptSelector.tsx) - AI-generated concept suggestions dropdown
+- [components/ProcessSelector.tsx](components/ProcessSelector.tsx) - AI-generated process suggestions dropdown

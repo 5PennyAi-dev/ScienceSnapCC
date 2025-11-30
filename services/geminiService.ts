@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle } from "../types";
-import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, STYLE_CONFIG } from "../constants";
+import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, STYLE_CONFIG } from "../constants";
 
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
@@ -196,6 +196,100 @@ export const generateFactFromConcept = async (concept: string, lang: Language, a
     return JSON.parse(text) as ScientificFact;
   } catch (error) {
     console.error("Error generating concept fact:", error);
+    throw error;
+  }
+};
+
+export interface ConceptSuggestion {
+  concept: string;
+  description: string;
+}
+
+export const generateConceptSuggestions = async (
+  lang: Language,
+  audience: Audience
+): Promise<ConceptSuggestion[]> => {
+  const ai = getAiClient();
+  let prompt = CONCEPT_SUGGESTIONS_PROMPT
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  try {
+    const response = await retryWithBackoff(() => ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              concept: { type: Type.STRING },
+              description: { type: Type.STRING }
+            },
+            required: ["concept", "description"]
+          }
+        }
+      }
+    }));
+
+    const text = response.text;
+    if (!text) {
+      throw new Error("No suggestions returned from Gemini");
+    }
+
+    return JSON.parse(text) as ConceptSuggestion[];
+  } catch (error) {
+    console.error("Error generating concept suggestions:", error);
+    throw error;
+  }
+};
+
+export interface ProcessSuggestion {
+  process: string;
+  description: string;
+}
+
+export const generateProcessSuggestions = async (
+  lang: Language,
+  audience: Audience
+): Promise<ProcessSuggestion[]> => {
+  const ai = getAiClient();
+  let prompt = PROCESS_SUGGESTIONS_PROMPT
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  try {
+    const response = await retryWithBackoff(() => ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              process: { type: Type.STRING },
+              description: { type: Type.STRING }
+            },
+            required: ["process", "description"]
+          }
+        }
+      }
+    }));
+
+    const text = response.text;
+    if (!text) {
+      throw new Error("No suggestions returned from Gemini");
+    }
+
+    return JSON.parse(text) as ProcessSuggestion[];
+  } catch (error) {
+    console.error("Error generating process suggestions:", error);
     throw error;
   }
 };
