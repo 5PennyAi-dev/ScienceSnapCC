@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode } from './types';
+import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData } from './types';
 import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan } from './services/geminiService';
+import { researchFactForInfographic } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
 import { GalleryGrid } from './components/GalleryGrid';
@@ -33,6 +34,7 @@ const App: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [currentPlan, setCurrentPlan] = useState('');
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [currentResearch, setCurrentResearch] = useState<FactResearchData | null>(null);
 
   // Process/Sequence Learning Mode State
   const [processStructure, setProcessStructure] = useState<{
@@ -412,19 +414,46 @@ const App: React.FC = () => {
     setAppState('planning');
     setLoading(true);
     setError(null);
-    
+
     // Clear any previous process sequence state to ensure correct result rendering
     setCurrentSequence([]);
     setProcessStructure(null);
-    
+    setCurrentResearch(null);
+
     try {
+      // Step 1: Research the fact using Perplexity (graceful fallback if API not available)
+      setLoadingMessage(t.loadingResearching || "Researching...");
+      const research = await researchFactForInfographic(fact.title, fact.text, fact.domain, audience, language);
+      setCurrentResearch(research);
+
+      // Format research into context string for plan generation
+      let researchContext = '';
+      if (research && !research.error) {
+        const parts: string[] = [];
+        if (research.scientificDetails.length > 0) {
+          parts.push(`Scientific details to include:\n- ${research.scientificDetails.join('\n- ')}`);
+        }
+        if (research.visualMetaphors.length > 0) {
+          parts.push(`Visual metaphors/representations:\n- ${research.visualMetaphors.join('\n- ')}`);
+        }
+        if (research.analogies.length > 0) {
+          parts.push(`Helpful analogies:\n- ${research.analogies.join('\n- ')}`);
+        }
+        if (research.misconceptions.length > 0) {
+          parts.push(`Common misconceptions to AVOID:\n- ${research.misconceptions.join('\n- ')}`);
+        }
+        researchContext = parts.join('\n\n');
+      }
+
+      // Step 2: Generate the plan with research context
       setLoadingMessage(t.loadingPlanning);
-      const plan = await generateInfographicPlan(fact, language, audience, artStyle);
+      const plan = await generateInfographicPlan(fact, language, audience, artStyle, researchContext || undefined);
       setCurrentPlan(plan);
-      
+
+      // Step 3: Generate the image
       setAppState('generating');
       setLoadingMessage(t.loadingRendering);
-      
+
       const image = await generateInfographicImage(plan, imageModel, aspectRatio, artStyle);
       setCurrentImage(image);
       setAppState('result');
@@ -501,7 +530,7 @@ const App: React.FC = () => {
         const isUrl = imageUrlToSave.startsWith('http');
         console.log(`Saving to DB. Source: ${isUrl ? 'ImageKit Cloud' : 'Local Base64'}`);
 
-        const dataToSave = {
+        const dataToSave: any = {
           id: newItemId,
           timestamp: Date.now(),
           title: selectedFact.title,
@@ -516,6 +545,11 @@ const App: React.FC = () => {
           modelName: imageModel,
           language: language
         };
+
+        // Include Perplexity research data if available
+        if (currentResearch) {
+          dataToSave.research = currentResearch;
+        }
 
         console.log('Data to save:', dataToSave);
 

@@ -48,7 +48,7 @@ npm run preview
 - **Frontend**: React 19 + TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **AI Services**: Google GenAI SDK (gemini-2.5-flash for text, gemini-3-pro-image-preview for image generation)
+- **AI Services**: Google GenAI SDK (gemini-2.5-flash for text, gemini-3-pro-image-preview for image generation), Perplexity API (sonar-pro for web research)
 - **Database**: InstantDB (real-time persistence with reactive queries)
 - **UI Icons**: Lucide React
 
@@ -61,10 +61,11 @@ The application has three main discovery modes:
 3. **Process/Sequence**: User enters a process (e.g., "Photosynthesis", "Water Cycle") → Gemini generates 4-6 sequential steps with visualizations
 
 #### Single Fact/Concept Pipeline
-For facts and concepts, the generation pipeline follows three steps:
+For facts and concepts, the generation pipeline follows these steps:
 1. **Fact Generation** (gemini-2.5-flash): Creates scientifically accurate, age-appropriate content
-2. **Visual Planning** (gemini-2.5-flash): Generates a detailed design specification (layout, colors, visual metaphors)
-3. **Image Rendering** (gemini-3-pro-image-preview): Generates high-fidelity 3:4 infographic based on the plan
+2. **Research Enhancement** (Perplexity sonar-pro, Explore Domain only): Researches the selected fact for scientific details, visual metaphors, analogies, and common misconceptions
+3. **Visual Planning** (gemini-2.5-flash): Generates a detailed design specification enriched with research context
+4. **Image Rendering** (gemini-3-pro-image-preview): Generates high-fidelity 3:4 infographic based on the plan
 
 #### Process/Sequence Pipeline
 For processes, the generation is sequential for each step:
@@ -286,10 +287,41 @@ When process generation fails:
    - `✓ Image rendered successfully`
    - `❌ FAILED` with error message if it fails
 
+## Perplexity Research Integration
+
+The app uses Perplexity API to enhance infographic generation with real-time web research in "Explore Domain" mode.
+
+### How It Works
+1. When user selects a fact in Explore Domain mode, `researchFactForInfographic()` is called
+2. Perplexity API researches the fact and returns structured data:
+   - **scientificDetails**: 3-5 specific scientific facts about the topic
+   - **visualMetaphors**: 2-3 ways to visually represent the concept
+   - **analogies**: 2-3 age-appropriate comparisons
+   - **misconceptions**: 1-2 common wrong beliefs to avoid
+3. Research results are formatted into a context string and passed to `generateInfographicPlan()`
+4. The enriched plan produces more accurate and educational infographics
+5. Research data is saved to the database alongside the infographic
+
+### Configuration
+- **API Key**: Set `PERPLEXITY_API_KEY` in `.env.local`
+- **Vite Proxy**: Configured in `vite.config.ts` to proxy `/api/perplexity` to `https://api.perplexity.ai` (avoids CORS issues)
+- **Model**: Uses `sonar-pro` model for comprehensive web search
+
+### Graceful Degradation
+- If `PERPLEXITY_API_KEY` is not set or API fails, generation continues without research context
+- `researchFactForInfographic()` returns empty data with `error` field set
+- The app functions normally, just without research enrichment
+
+### Key Functions
+- `researchFactForInfographic()` in perplexityService.ts: Main research function
+- `buildFactResearchPrompt()`: Constructs the research prompt
+- `generateInfographicPlan()` accepts optional `researchContext` parameter
+
 ## Key Files Reference
 
 - [App.tsx](App.tsx) - Main component, state management, UI routing
 - [services/geminiService.ts](services/geminiService.ts) - All Gemini API interactions
+- [services/perplexityService.ts](services/perplexityService.ts) - Perplexity API research functions
 - [types.ts](types.ts) - TypeScript interfaces and enums
 - [constants.ts](constants.ts) - Model names, prompts, style configs, domain list
 - [translations.ts](translations.ts) - Multilingual strings (includes domain translations)

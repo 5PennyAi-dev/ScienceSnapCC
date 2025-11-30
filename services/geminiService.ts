@@ -200,7 +200,7 @@ export const generateFactFromConcept = async (concept: string, lang: Language, a
   }
 };
 
-export const generateInfographicPlan = async (fact: ScientificFact, lang: Language, audience: Audience, style: ArtStyle): Promise<string> => {
+export const generateInfographicPlan = async (fact: ScientificFact, lang: Language, audience: Audience, style: ArtStyle, researchContext?: string): Promise<string> => {
   const ai = getAiClient();
 
   // Use replacer functions (() => value) to avoid issues if the content contains special replacement patterns like '$&'
@@ -211,6 +211,11 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
     .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
 
   prompt = injectContext(prompt, audience, style);
+
+  // If research context is provided, append it to enrich the plan
+  if (researchContext) {
+    prompt += `\n\n**RESEARCH CONTEXT (Use this to enhance accuracy and visual design):**\n${researchContext}`;
+  }
 
   try {
     console.log(`[Plan Generation] Starting with fact: "${fact.title}"`);
@@ -228,12 +233,14 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
     const elapsed = Date.now() - startTime;
     console.log(`[Plan Generation] API responded in ${elapsed}ms`);
 
-    const text = response.text;
+    const candidate = response.candidates?.[0];
+    const text = response.text || candidate?.content?.parts?.[0]?.text;
+
+    console.log(`[Plan Generation] Finish reason: ${candidate?.finishReason}, has text: ${!!text}`);
 
     if (!text) {
-        const candidate = response.candidates?.[0];
-        // Check for safety blockage or other finish reasons
-        if (candidate?.finishReason) {
+        // Only treat non-STOP finish reasons as blocks (SAFETY, RECITATION, etc.)
+        if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
             throw new Error(`Plan generation blocked. Reason: ${candidate.finishReason}`);
         }
         throw new Error("No plan returned from Gemini (Empty response)");

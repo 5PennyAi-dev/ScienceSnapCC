@@ -23,6 +23,8 @@ export interface InfographicItem {
   isSequence?: boolean;
   steps?: InfographicStep[];
   totalSteps?: number;
+  // Perplexity research data (for Explore Domain mode)
+  research?: FactResearchData;
   // Metadata fields
   aspectRatio?: AspectRatio;
   style?: ArtStyle;
@@ -53,4 +55,29 @@ export type ArtStyle = 'DEFAULT' | 'PIXEL' | 'CLAY' | 'ORIGAMI' | 'WATERCOLOR' |
 export interface AIStudio {
   hasSelectedApiKey: () => Promise<boolean>;
   openSelectKey: () => Promise<void>;
+}
+
+// Perplexity Research Data for Process/Sequence mode
+export interface PerplexityResearchData {
+  processName: string;
+  accuracy: { findings: string[]; sources: string[] };
+  stepBreakdown: { steps: string[]; sources: string[] };
+  visualGuidance: { descriptions: string[]; sources: string[] };
+  misconceptions: string[];
+  analogies: string[];
+  citations: string[];
+  timestamp: number;
+  error?: string;
+}
+
+// Perplexity Research Data for single Fact/Concept (Explore Domain mode)
+export interface FactResearchData {
+  factTitle: string;
+  scientificDetails: string[];
+  visualMetaphors: string[];
+  analogies: string[];
+  misconceptions: string[];
+  sources: string[];
+  timestamp: number;
+  error?: string;
 }
