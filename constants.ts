@@ -1,6 +1,24 @@
 
 import { ArtStyle } from './types';
 
+// Scientific Domains for Explore mode
+export const SCIENTIFIC_DOMAINS = [
+  { id: 'astrophysics', emoji: '🌌' },
+  { id: 'marineBiology', emoji: '🐋' },
+  { id: 'dinosaurs', emoji: '🦕' },
+  { id: 'ai', emoji: '🤖' },
+  { id: 'humanBody', emoji: '🧠' },
+  { id: 'climate', emoji: '🌍' },
+  { id: 'quantumPhysics', emoji: '⚛️' },
+  { id: 'volcanology', emoji: '🌋' },
+  { id: 'genetics', emoji: '🧬' },
+  { id: 'chemistry', emoji: '⚗️' },
+  { id: 'renewableEnergy', emoji: '☀️' },
+  { id: 'insects', emoji: '🦋' },
+] as const;
+
+export type DomainId = typeof SCIENTIFIC_DOMAINS[number]['id'];
+
 // Models
 export const TEXT_MODEL = 'gemini-2.5-flash';
 export const IMAGE_MODEL_FLASH = 'gemini-2.5-flash-image';

@@ -8,6 +8,7 @@ import { GalleryGrid } from './components/GalleryGrid';
 import { ImageModal } from './components/ImageModal';
 import { StyleSelector } from './components/StyleSelector';
 import { FilterPill } from './components/FilterPill';
+import { DomainSelector } from './components/DomainSelector';
 import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle, X } from 'lucide-react';
 import { db } from './db';
 import { tx, id } from "@instantdb/react";
@@ -774,6 +775,16 @@ const App: React.FC = () => {
                     </button>
                 </div>
 
+                {/* Domain Selector - only visible in domain mode */}
+                {searchMode === 'domain' && (
+                    <div className="mb-3 flex justify-start">
+                        <DomainSelector
+                            onSelect={(domain) => setQuery(domain)}
+                            language={language}
+                        />
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="relative">
                     <input
                         type="text"
@@ -791,22 +802,6 @@ const App: React.FC = () => {
                         <ArrowRight className="w-4 h-4" />
                     </button>
                 </form>
-            </div>
-
-            {/* Quick Start Chips */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-                {['Astrophysics', 'Oceanography', 'Quantum Physics', 'Botany'].map((tag, idx) => {
-                    const colors = ['bg-cyan-500 border-cyan-700 text-white', 'bg-yellow-400 border-yellow-600 text-gray-800', 'bg-teal-500 border-teal-700 text-white', 'bg-blue-500 border-blue-700 text-white'];
-                    return (
-                        <button
-                            key={tag}
-                            onClick={() => { setSearchMode('domain'); setQuery(tag); }}
-                            className={`px-5 py-2 rounded-full border-2 ${colors[idx]} text-xs font-bold hover:shadow-lg transition-all transform hover:scale-105 hover:animate-bounce-light`}
-                        >
-                            {tag}
-                        </button>
-                    );
-                })}
             </div>
           </div>
         )}

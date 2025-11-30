@@ -36,7 +36,7 @@ npm run preview
 
 The application has three main discovery modes:
 
-1. **Explore Domain**: User enters a scientific field (e.g., "Astrophysics") → Gemini generates 3 interesting facts in that domain
+1. **Explore Domain**: User selects a scientific field from a dropdown (12 predefined domains) or types a custom domain → Gemini generates 3 interesting facts in that domain
 2. **Explain Concept**: User enters a specific concept (e.g., "Black Holes") → Gemini provides a deep-dive explanation
 3. **Process/Sequence**: User enters a process (e.g., "Photosynthesis", "Water Cycle") → Gemini generates 4-6 sequential steps with visualizations
 
@@ -116,11 +116,17 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
   - **Per-Step Editing**: Edit prompt applies only to current step in sequence
   - **Per-Step Download**: Filename includes step number for sequences
 - **StyleSelector.tsx**: UI for selecting art styles with visual previews
+- **DomainSelector.tsx**: Dropdown for selecting predefined scientific domains in "Explore Domain" mode
+  - 12 predefined domains with emojis (Astrophysics, Marine Biology, Dinosaurs, AI, etc.)
+  - Bilingual support (EN/FR) via translations
+  - Selecting a domain auto-fills the search input
+  - Users can still type custom domains
 
 ### Configuration & Prompts
 
 **constants.ts** centralizes:
 - Model names (TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO)
+- Scientific domains list (SCIENTIFIC_DOMAINS) with IDs and emojis
 - Art style descriptions (STYLE_CONFIG)
 - Prompt templates:
   - Single mode: FACT_GENERATION_PROMPT, CONCEPT_EXPLANATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT
@@ -265,7 +271,8 @@ When process generation fails:
 - [App.tsx](App.tsx) - Main component, state management, UI routing
 - [services/geminiService.ts](services/geminiService.ts) - All Gemini API interactions
 - [types.ts](types.ts) - TypeScript interfaces and enums
-- [constants.ts](constants.ts) - Model names, prompts, style configs
-- [translations.ts](translations.ts) - Multilingual strings
+- [constants.ts](constants.ts) - Model names, prompts, style configs, domain list
+- [translations.ts](translations.ts) - Multilingual strings (includes domain translations)
 - [db.ts](db.ts) - InstantDB initialization
 - [components/](components/) - Reusable UI components
+- [components/DomainSelector.tsx](components/DomainSelector.tsx) - Domain selection dropdown
