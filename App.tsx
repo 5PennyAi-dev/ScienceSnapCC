@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData, PerplexityResearchData } from './types';
-import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, ConceptSuggestion, ProcessSuggestion } from './services/geminiService';
+import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, generateVisualStyleDNA, ConceptSuggestion, ProcessSuggestion } from './services/geminiService';
 import { researchFactForInfographic, researchProcessForEducation } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
@@ -49,6 +49,8 @@ const App: React.FC = () => {
   const [currentSequence, setCurrentSequence] = useState<InfographicStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentProcessResearch, setCurrentProcessResearch] = useState<PerplexityResearchData | null>(null);
+  const [currentStyleDNA, setCurrentStyleDNA] = useState<any>(null);
+  const [currentSeed, setCurrentSeed] = useState<number>(0);
 
   // Concept Suggestions State (for Explain Concept mode)
   const [conceptSuggestions, setConceptSuggestions] = useState<ConceptSuggestion[]>([]);
@@ -340,6 +342,32 @@ const App: React.FC = () => {
       setCurrentProcessResearch(processResearch);
       console.log("[Process] Research complete", processResearch.error ? "(with errors)" : "(successful)");
 
+      // Step 1c: Generate Style DNA for visual consistency
+      console.log("[Process] Generating Style DNA for visual consistency...");
+      setLoadingMessage("Planning visual style...");
+      let workingStyleDNA: any = null;
+      try {
+        workingStyleDNA = await generateVisualStyleDNA(
+          structure.processName,
+          structure.domain,
+          structure.stepTitles.length,
+          language,
+          audience,
+          artStyle
+        );
+        console.log("[Process] Style DNA generated:", JSON.stringify(workingStyleDNA, null, 2));
+        setCurrentStyleDNA(workingStyleDNA);
+      } catch (dnaError) {
+        console.warn("[Process] Style DNA generation failed, will use legacy consistency system:", dnaError);
+        workingStyleDNA = null;
+        setCurrentStyleDNA(null);
+      }
+
+      // Step 1d: Generate fixed seed for reproducible image generation
+      const workingSeed = Math.floor(Math.random() * 1000000);
+      setCurrentSeed(workingSeed);
+      console.log(`[Process] Generated fixed seed: ${workingSeed}`);
+
       // Step 2: Generate each step sequentially
       const steps: InfographicStep[] = [];
       let previousContext = structure.overviewText;
@@ -371,7 +399,7 @@ const App: React.FC = () => {
           setLoadingMessage(`${t.loadingPlanningStep} ${stepNum}/${totalSteps}...`);
 
           // 2b: Generate visual plan for this step
-          console.log(`[Step ${stepNum}] Generating visual plan...`);
+          console.log(`[Step ${stepNum}] Generating visual plan with Style DNA...`);
           const keyEventsStr = stepExplanation.keyEvents.join(', ');
           const stepPlan = await generateStepInfographicPlan(
             structure.processName,
@@ -381,6 +409,7 @@ const App: React.FC = () => {
             stepExplanation.description,
             keyEventsStr,
             structure.domain,
+            workingStyleDNA,
             steps,
             language,
             audience,
@@ -392,8 +421,8 @@ const App: React.FC = () => {
           setLoadingMessage(`${t.loadingRenderingStep} ${stepNum}/${totalSteps}...`);
 
           // 2c: Render the image (use longer timeout for process sequences - 2 minutes per step)
-          console.log(`[Step ${stepNum}] Rendering image with 120s timeout...`);
-          const stepImage = await generateInfographicImage(stepPlan, imageModel, aspectRatio, artStyle, 120000);
+          console.log(`[Step ${stepNum}] Rendering image with seed ${workingSeed} and 120s timeout...`);
+          const stepImage = await generateInfographicImage(stepPlan, imageModel, aspectRatio, artStyle, 120000, workingSeed);
           console.log(`[Step ${stepNum}] ✓ Image rendered successfully`);
 
           // 2d: Add to sequence
@@ -462,6 +491,8 @@ const App: React.FC = () => {
       setCurrentSequence([]);
       setProcessStructure(null);
       setCurrentProcessResearch(null);
+      setCurrentStyleDNA(null);
+      setCurrentSeed(0);
     } finally {
       setLoading(false);
     }
@@ -584,6 +615,14 @@ const App: React.FC = () => {
         // Include Perplexity research data if available
         if (currentProcessResearch) {
           (dataToSave as any).processResearch = currentProcessResearch;
+        }
+
+        // Include Style DNA and seed for consistency tracking and potential regeneration
+        if (currentStyleDNA) {
+          (dataToSave as any).styleDNA = currentStyleDNA;
+        }
+        if (currentSeed) {
+          (dataToSave as any).seed = currentSeed;
         }
 
         console.log('Sequence data to save:', dataToSave);

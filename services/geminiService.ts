@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle, PerplexityResearchData } from "../types";
-import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, STYLE_CONFIG } from "../constants";
+import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle, PerplexityResearchData, VisualStyleDNA } from "../types";
+import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, VISUAL_STYLE_DNA_GENERATOR_PROMPT, STYLE_CONFIG } from "../constants";
 
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
@@ -346,7 +346,7 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
   }
 };
 
-export const generateInfographicImage = async (plan: string, model: ImageModelType, aspectRatio: AspectRatio, style: ArtStyle, timeoutMs: number = 60000): Promise<string> => {
+export const generateInfographicImage = async (plan: string, model: ImageModelType, aspectRatio: AspectRatio, style: ArtStyle, timeoutMs: number = 60000, seed?: number): Promise<string> => {
   const ai = getAiClient();
 
   const config: any = {
@@ -354,6 +354,12 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
           aspectRatio: aspectRatio,
       }
   };
+
+  // Add seed for reproducible generation (process sequences)
+  if (seed !== undefined) {
+    config.seed = seed;
+    console.log(`[Image Generation] Using fixed seed: ${seed}`);
+  }
 
   if (model === IMAGE_MODEL_PRO) {
       config.imageConfig.imageSize = "1K";
@@ -592,6 +598,78 @@ export const generateProcessStructure = async (
   }
 };
 
+export const generateVisualStyleDNA = async (
+  processName: string,
+  domain: string,
+  totalSteps: number,
+  language: Language,
+  audience: Audience,
+  style: ArtStyle
+): Promise<VisualStyleDNA> => {
+  const ai = getAiClient();
+
+  let prompt = VISUAL_STYLE_DNA_GENERATOR_PROMPT
+    .replace(/{{PROCESS_NAME}}/g, () => processName)
+    .replace(/{{DOMAIN}}/g, () => domain)
+    .replace(/{{TOTAL_STEPS}}/g, () => totalSteps.toString())
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(language));
+
+  prompt = injectContext(prompt, audience, style);
+
+  try {
+    console.log('[Style DNA] Generating visual style specification...');
+
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              artStylePrompt: { type: Type.STRING },
+              colorPalette: {
+                type: Type.OBJECT,
+                properties: {
+                  primary: { type: Type.STRING },
+                  secondary: { type: Type.STRING },
+                  accent: { type: Type.STRING },
+                  background: { type: Type.STRING },
+                  text: { type: Type.STRING }
+                },
+                required: ["primary", "secondary", "accent", "background", "text"]
+              },
+              lightingAndAtmosphere: { type: Type.STRING },
+              compositionRules: {
+                type: Type.OBJECT,
+                properties: {
+                  titleStyle: { type: Type.STRING },
+                  badgeStyle: { type: Type.STRING },
+                  layoutTemplate: { type: Type.STRING }
+                },
+                required: ["titleStyle", "badgeStyle", "layoutTemplate"]
+              },
+              typographyStyle: { type: Type.STRING }
+            },
+            required: ["artStylePrompt", "colorPalette", "lightingAndAtmosphere", "compositionRules", "typographyStyle"]
+          }
+        }
+      })),
+      60000,
+      "Style DNA generation"
+    );
+
+    const dna = JSON.parse(response.text) as VisualStyleDNA;
+    console.log('[Style DNA] Generated:', JSON.stringify(dna, null, 2));
+    return dna;
+
+  } catch (error) {
+    console.error("Error generating Style DNA:", error);
+    throw error;
+  }
+};
+
 export const generateStepExplanation = async (
   processName: string,
   stepNumber: number,
@@ -651,124 +729,99 @@ export const generateStepExplanation = async (
   }
 };
 
-// Helper to build visual consistency context from completed steps
-// Ensures each step in a sequence maintains consistent visual design
-const buildVisualConsistencyContext = (
+// Helper to build Style DNA context for step plan generation
+// Uses pre-generated DNA for visual consistency across all steps
+const buildStyleDNAContext = (
+  styleDNA: VisualStyleDNA,
   completedSteps: any[],
-  totalSteps: number,
-  audience: Audience,
-  style: ArtStyle
+  stepNumber: number,
+  totalSteps: number
 ): string => {
-  if (completedSteps.length === 0) {
-    // First step - establish the visual foundation
-    const audienceConfig = AUDIENCE_CONFIG[audience];
-    const styleDesc = style !== 'DEFAULT' ? STYLE_CONFIG[style] : audienceConfig.visualStyle;
+  const colorPaletteStr = Object.entries(styleDNA.colorPalette)
+    .map(([key, value]) => `  - ${key}: ${value}`)
+    .join('\n');
 
-    return `**VISUAL FOUNDATION (Step 1 - Establish These Conventions):**
-This is the FIRST step in the sequence. You must establish clear and consistent visual conventions that WILL BE ENFORCED in all subsequent steps:
+  const baseContext = `**STYLE DNA (MANDATORY VISUAL SPECIFICATIONS):**
 
-**1. TITLE TEXT DESIGN** (CRITICAL - Must be identical across ALL steps):
-Define the EXACT visual design for the step title at the top of the image:
-  * Font style: (e.g., bold sans-serif, rounded, playful)
-  * Font size: (e.g., 48px, large)
-  * Text color: (specific hex code, e.g., #2D3748)
-  * Background: (if any - color, opacity, shape behind title)
-  * Position: (e.g., top-center, 30px from top edge)
-  * Text effects: (shadow, outline, etc.)
-  This title design MUST remain EXACTLY THE SAME in all subsequent steps - only the title text changes!
+**Art Style:** ${styleDNA.artStylePrompt}
 
-**2. STEP INDICATOR BADGE DESIGN** (CRITICAL - Must be identical across ALL steps):
-Define the EXACT visual design for the step indicator badge (e.g., "STEP 1/5"):
-  * Shape: (e.g., rounded rectangle, shield, circle, hexagon)
-  * Background color: (specific hex code or color name)
-  * Border style: (thickness, color, rounded corners radius)
-  * Text style: (font weight, size, color)
-  * Position: (e.g., top-right corner, 20px from edges)
-  * Size: (width x height in pixels or approximate size)
-  This step indicator design MUST remain EXACTLY THE SAME in all subsequent steps - only the number changes!
+**Color Palette (USE THESE EXACT HEX CODES):**
+${colorPaletteStr}
 
-**3. COLOR PALETTE**: Select 3-5 core colors and specify what each represents (e.g., "water = cyan blue #0088CC", "sunlight = golden yellow #FFD700")
+**Lighting & Atmosphere:** ${styleDNA.lightingAndAtmosphere}
 
-**4. ILLUSTRATION STYLE**: Specify line weight, shading technique, level of detail, overall artistic approach
+**Typography:** ${styleDNA.typographyStyle}
 
-**5. LAYOUT CONVENTIONS**: Where the title goes, where the step badge appears, how annotations and callouts are positioned
+**Title Styling (REPLICATE EXACTLY):** ${styleDNA.compositionRules.titleStyle}
 
-**6. TEXT STYLES FOR LABELS & EXPLANATIONS**: Font style, text size hierarchy, how labels and explanations are formatted
+**Step Badge Styling (REPLICATE EXACTLY):** ${styleDNA.compositionRules.badgeStyle}
 
-- Overall style: ${styleDesc}
+**Layout Template:** ${styleDNA.compositionRules.layoutTemplate}
 
-DOCUMENT ALL these choices clearly in the visual plan. They MUST be exactly replicated in all subsequent steps.`;
+**CRITICAL:** These specs are MANDATORY. Use exact hex codes, follow typography rules, maintain layout precisely for consistency across all ${totalSteps} steps.`;
+
+  // Add content deduplication (independent of visual consistency)
+  if (completedSteps.length > 0) {
+    const contentContext = `
+
+**CONTENT ALREADY COVERED (DO NOT REPEAT):**
+${completedSteps.map((step, idx) => `- Step ${idx + 1}: "${step.title}" - ${step.description?.substring(0, 100) || 'N/A'}...`).join('\n')}
+
+**FOCUS FOR STEP ${stepNumber}:**
+- Show ONLY what happens in THIS step
+- DO NOT repeat content from previous steps
+- Each label must be UNIQUE within this image`;
+
+    return baseContext + contentContext;
   }
 
-  // Subsequent steps - maintain consistency with Step 1
-  // CRITICAL: Inject the COMPLETE Step 1 plan so Gemini can read and copy exact specifications
+  return baseContext;
+};
+
+// DEPRECATED: Legacy visual consistency context builder (fallback only)
+// Use buildStyleDNAContext instead for new code. This is kept for fallback if DNA generation fails.
+const buildVisualConsistencyContextLegacy = (
+  completedSteps: any[],
+  totalSteps: number
+): string => {
+  if (completedSteps.length === 0) {
+    return `**VISUAL FOUNDATION (Step 1 - Establish These Conventions):**
+This is the FIRST step in the sequence. You must establish clear visual conventions that will be enforced in all subsequent steps.
+Define the EXACT visual design for:
+1. TITLE: Font style, size, color (hex), position, effects
+2. STEP BADGE: Shape, background color, border style, text style, position
+3. COLOR PALETTE: 3-5 core colors with hex codes
+4. ILLUSTRATION STYLE: Line weight, shading, level of detail
+5. LAYOUT CONVENTIONS: Title placement, badge position, annotation style
+6. TEXT STYLES: Font styles for labels and explanations
+Document ALL these choices clearly in the visual plan. They MUST be exactly replicated in all subsequent steps.`;
+  }
+
   const firstStepPlan = completedSteps[0].plan || "";
+  return `**VISUAL CONSISTENCY CONTEXT (ENFORCE from Step 1):**
 
-  return `**VISUAL CONSISTENCY CONTEXT (ENFORCE These Conventions from Step 1):**
+You are generating Step ${completedSteps.length + 1} of ${totalSteps}.
 
-You are generating Step ${completedSteps.length + 1} of ${totalSteps} in an existing sequence.
-
-**CRITICAL: Below is the COMPLETE visual plan from Step 1. You MUST read it carefully and EXACTLY replicate all visual design decisions:**
+**CRITICAL: Below is the visual plan from Step 1. You MUST replicate all visual design decisions:**
 
 <STEP_1_VISUAL_PLAN>
 ${firstStepPlan}
 </STEP_1_VISUAL_PLAN>
 
-**EXTRACT FROM THE STEP 1 PLAN ABOVE AND REPLICATE EXACTLY:**
+**Extract from Step 1 plan above and replicate EXACTLY:**
+1. TITLE TEXT: Same font style, size (px), text color (hex), background, position - only change text content
+2. STEP INDICATOR BADGE: Same shape, colors (hex), border, position, size - only change the step number
+3. COLOR PALETTE: Use EXACTLY same colors and hex codes from Step 1
+4. ILLUSTRATION STYLE: Match drawing technique, line weight, shading, level of detail
+5. LAYOUT TEMPLATE: Same title placement, badge position, annotation style
+6. TEXT STYLES: Same font styles for labels and explanations
 
-**1. TITLE TEXT (Copy EXACTLY from Step 1 plan above):**
-- Find the title text specifications in the Step 1 plan (font style, font size, text color, background, position, effects)
-- Use the EXACT SAME font style, font size (e.g., 48px), text color (hex code), background treatment, and position
-- ONLY change the actual title text content - all styling must be IDENTICAL to Step 1
-- The title must be VISUALLY IDENTICAL in style to Step 1's title
+**Previous Steps:** ${completedSteps.map((step, idx) => `Step ${idx + 1}: "${step.title}"`).join(', ')}
 
-**2. STEP INDICATOR BADGE (Copy EXACTLY from Step 1 plan above):**
-- Find the badge specifications in the Step 1 plan (shape, colors, border, text style, position, size)
-- Use the EXACT SAME shape, background color (hex code), border style, text color, position, and size
-- ONLY change the number from "1" to "${completedSteps.length + 1}"
-- DO NOT invent new colors or styles - copy exactly what Step 1 defined
-- The badge must be VISUALLY IDENTICAL to Step 1's badge
+**DO NOT REPEAT:** The following content was already shown - DO NOT include it again:
+${completedSteps.map((step, idx) => `- Step ${idx + 1}: ${step.description?.substring(0, 100) || 'N/A'}...`).join('\n')}
 
-**3. COLOR PALETTE (Copy EXACTLY from Step 1 plan above):**
-- Find all hex color codes defined in Step 1's plan
-- Use EXACTLY those same colors for the same concepts
-- DO NOT create new colors - use the palette from Step 1
-- Map: [Concept] → [Exact hex color from Step 1]
-
-**4. ILLUSTRATION STYLE (Match EXACTLY from Step 1 plan above):**
-- Copy the illustration technique, line weight, shading approach
-- Match the level of detail and artistic style precisely
-- Keep consistent character/object proportions
-
-**5. LAYOUT TEMPLATE (Replicate from Step 1 plan above):**
-- Title placement: same position as Step 1
-- Step badge position: same corner and distance from edges
-- Annotation style: same arrow types, callout boxes
-- Content area: same composition and boundaries
-
-**6. TEXT STYLES FOR LABELS & EXPLANATIONS (Copy from Step 1):**
-- Use the same font styles for labels and explanatory text
-- Maintain the same text hierarchy (sizes, colors, formatting)
-
-**Previous Steps Summary:**
-${completedSteps.map((step, idx) => `- Step ${idx + 1}: "${step.title}"`).join('\n')}
-
-**CONTENT ALREADY COVERED (DO NOT REPEAT):**
-The following content was already illustrated in previous steps. DO NOT include this content again in Step ${completedSteps.length + 1}:
-${completedSteps.map((step, idx) => `- Step ${idx + 1} covered: "${step.title}" - ${step.description ? step.description.substring(0, 150) + '...' : 'N/A'}`).join('\n')}
-
-**CONTENT EXCLUSION RULES:**
-- DO NOT illustrate events or concepts from the list above - they were already shown
-- DO NOT repeat labels, annotations, or explanations from previous steps
-- Show ONLY new content specific to Step ${completedSteps.length + 1}
-- If an element must appear again (continuity), show it in its NEW state, not repeat the old explanation
-
-**NO DUPLICATE LABELS IN THIS IMAGE:**
-- Each label in this image must be UNIQUE - do not use the same label text twice
-- Each visual element gets ONE label, not multiple
-- Avoid redundant text - don't explain the same thing in multiple places
-
-**CRITICAL:** The viewer must see ZERO visual discontinuity. This step MUST look like it was created by the SAME ARTIST using the EXACT SAME template as Step 1. Read the Step 1 plan above and copy every visual specification precisely.`;
+**CRITICAL:** Zero visual discontinuity. This step MUST look like it was created by the SAME ARTIST using the EXACT SAME template as Step 1.`;
 };
 
 export const generateStepInfographicPlan = async (
@@ -779,6 +832,7 @@ export const generateStepInfographicPlan = async (
   stepDescription: string,
   keyEventsStr: string,
   domain: string,
+  styleDNA: VisualStyleDNA,
   completedSteps: any[],
   lang: Language,
   audience: Audience,
@@ -787,8 +841,14 @@ export const generateStepInfographicPlan = async (
 ): Promise<string> => {
   const ai = getAiClient();
 
-  // Build visual consistency context based on previous steps
-  const visualConsistencyContext = buildVisualConsistencyContext(completedSteps, totalSteps, audience, style);
+  // Build style DNA context for visual consistency (fallback to legacy if styleDNA is null)
+  let visualConsistencyContext: string;
+  if (styleDNA) {
+    visualConsistencyContext = buildStyleDNAContext(styleDNA, completedSteps, stepNumber, totalSteps);
+  } else {
+    console.warn("[Step Plan] styleDNA is null, using legacy visual consistency approach");
+    visualConsistencyContext = buildVisualConsistencyContextLegacy(completedSteps, totalSteps);
+  }
 
   let prompt = PROCESS_STEP_PLAN_PROMPT
     .replace(/{{PROCESS_NAME}}/g, () => processName)

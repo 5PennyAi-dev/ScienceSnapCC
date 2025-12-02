@@ -27,6 +27,9 @@ export interface InfographicItem {
   research?: FactResearchData;
   // Perplexity research data (for Process/Sequence mode)
   processResearch?: PerplexityResearchData;
+  // Style DNA for sequence consistency (Process/Sequence mode only)
+  styleDNA?: VisualStyleDNA;
+  seed?: number; // Fixed seed used for generation
   // Metadata fields
   aspectRatio?: AspectRatio;
   style?: ArtStyle;
@@ -83,4 +86,23 @@ export interface FactResearchData {
   sources: string[];
   timestamp: number;
   error?: string;
+}
+
+// Visual Style DNA for Process/Sequence consistency
+export interface VisualStyleDNA {
+  artStylePrompt: string; // Overall artistic approach
+  colorPalette: {
+    primary: string; // Hex code with concept label
+    secondary: string;
+    accent: string;
+    background: string;
+    text: string;
+  };
+  lightingAndAtmosphere: string; // Lighting and mood description
+  compositionRules: {
+    titleStyle: string; // Font, size, color, position specifications
+    badgeStyle: string; // Step badge styling specifications
+    layoutTemplate: string; // Element arrangement rules
+  };
+  typographyStyle: string; // Font characteristics and hierarchy
 }

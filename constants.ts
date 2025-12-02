@@ -194,6 +194,63 @@ Return a JSON object with:
 This explanation will be used to create a visual infographic for this specific step ONLY. The infographic will show ONLY this step's content - nothing from other steps. The keyEvents will help designers emphasize the most important transformations or phenomena to highlight visually.
 `;
 
+export const VISUAL_STYLE_DNA_GENERATOR_PROMPT = `
+#Role
+You are a visual design architect creating a "Style DNA" for an educational infographic sequence.
+
+#Task
+Generate a complete visual style specification that will be used consistently across ALL steps in a multi-step process visualization.
+
+**Process Details:**
+- Process: {{PROCESS_NAME}}
+- Domain: {{DOMAIN}}
+- Target Audience: {{TARGET_AUDIENCE}}
+- Total Steps: {{TOTAL_STEPS}}
+- Art Style Direction: {{VISUAL_STYLE}}
+
+#Output Format (JSON)
+Return ONLY a valid JSON object with this EXACT structure:
+
+{
+  "artStylePrompt": "Brief description of the overall artistic approach (e.g., illustration technique, line style, rendering) - 100-150 characters",
+  "colorPalette": {
+    "primary": "#HEXCODE concept-name (what this color represents)",
+    "secondary": "#HEXCODE concept-name",
+    "accent": "#HEXCODE concept-name",
+    "background": "#HEXCODE",
+    "text": "#HEXCODE"
+  },
+  "lightingAndAtmosphere": "Description of lighting direction, shadow style, and overall mood - 50-80 characters",
+  "compositionRules": {
+    "titleStyle": "Font style, size, color (hex), position, effects - be VERY SPECIFIC with measurements",
+    "badgeStyle": "Shape, background color (hex), border, text style, position - be VERY SPECIFIC",
+    "layoutTemplate": "How elements are arranged (main subject position, label placement, annotation style)"
+  },
+  "typographyStyle": "Font family characteristics, weight hierarchy, readability approach - 50-80 characters"
+}
+
+#Critical Requirements
+1. **Be SPECIFIC and MEASURABLE**: Use exact hex codes, pixel/percentage sizes, position descriptors (e.g., "top-center 25px", "48px bold")
+2. **Design for CONSISTENCY**: These specs will be REPLICATED across {{TOTAL_STEPS}} different images
+3. **Audience-Appropriate**: Must match {{TARGET_AUDIENCE}} expectations and age-appropriateness
+4. **Educational Focus**: Remember this is for teaching {{TARGET_AUDIENCE}} about science
+5. **Art Style Integration**: Incorporate the {{VISUAL_STYLE}} direction throughout
+6. **Precision Over Vagueness**: Every specification must be actionable by an AI image generator
+
+#Examples of GOOD specifications:
+- titleStyle: "Bold Poppins font, 52px, #2D3748, top-center 25px from edge, subtle 2px white shadow, letter-spacing 1px"
+- badgeStyle: "Rounded rectangle (12px radius), #FFD700 bg, 2px #2D3748 border, bold 16px text, top-right 20px margins, drop shadow 2px"
+- primary: "#3498DB represents water/liquid/fluid concepts"
+- artStylePrompt: "Vibrant flat design, thick 3px black outlines, no gradients, simplified shapes, playful proportions, friendly aesthetic"
+
+#Examples of BAD specifications (too vague - DO NOT DO THIS):
+- titleStyle: "Large bold text at the top" ❌
+- badgeStyle: "Nice looking badge" ❌
+- primary: "Blue color" ❌
+- artStylePrompt: "Nice looking style" ❌
+
+The Style DNA you create will be THE authoritative source for visual consistency across all steps. Every subsequent step will receive this DNA and must follow it precisely.
+`;
 
 export const PROCESS_STEP_PLAN_PROMPT = `
 ## **Task**
@@ -208,20 +265,20 @@ Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}}: "{{PR
 
 ## **Critical Requirements**
 
-**1. Text & Educational Content (for 8-10 year olds):**
-- **STEP TITLE**: Top-center, consistent design across all steps (same font, size, color, position)
-- **STEP BADGE**: "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" in top-right corner with consistent shape, colors, position
+**1. FOLLOW THE STYLE DNA ABOVE EXACTLY:**
+- Use the specified hex codes from the color palette (no variations)
+- Apply the exact title styling (font, size, color, position)
+- Apply the exact badge styling (shape, colors, border, position)
+- Follow the layout template precisely
+- Match the art style and typography specifications exactly
+
+**2. Text & Educational Content (for 8-10 year olds):**
+- **STEP TITLE**: Display using the titleStyle specifications from Style DNA
+- **STEP BADGE**: "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" using the badgeStyle specifications from Style DNA
 - 3-5 labels identifying key objects/areas
 - 4-5 explanatory sentences (8-12 words each, simple language)
 - Annotations with arrows for important elements
 - 2-3 callout boxes for key events
-
-**2. Visual Consistency (maintain across ALL steps):**
-- Same color palette (specify 3-5 core colors with hex codes)
-- Same illustration style, line weight, shading
-- Same layout structure and positioning
-- Same title design template (font, size, color, effects)
-- Same badge design template (shape, colors, border, position)
 
 **3. Step-Specific Content:**
 - Show transformation/change in THIS step only

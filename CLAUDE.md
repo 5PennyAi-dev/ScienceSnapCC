@@ -73,14 +73,16 @@ For facts and concepts, the generation pipeline follows these steps:
 4. **Image Rendering** (gemini-3-pro-image-preview): Generates high-fidelity infographic based on the plan
 
 #### Process/Sequence Pipeline
-For processes, the generation is sequential for each step:
+For processes, the generation uses a single Style DNA specification applied consistently across all steps:
 1. **Process Structure Discovery** (gemini-2.5-flash): Identifies process name, domain, overview text, and step titles
 2. **Research Enhancement** (Perplexity sonar-pro): Researches the process for scientific accuracy, recommended step breakdown, visual guidance, and misconceptions
-3. **For each step** (sequential):
+3. **Style DNA Generation** (gemini-2.5-flash with JSON schema): Generates comprehensive visual specification once for the entire sequence (artStylePrompt, colorPalette with 5 colors, lightingAndAtmosphere, compositionRules, typographyStyle) - with fallback to legacy Step 1-based consistency system if generation fails
+4. **Fixed Seed Generation**: Creates a single random seed (0-999999) used for reproducible image generation across all steps
+5. **For each step** (sequential):
    - **Step Explanation** (gemini-2.5-flash): Detailed description and key events for the step
-   - **Step Visual Plan** (gemini-2.5-flash): Design specification for the step visualization, enriched with research context (accuracy guidelines, step breakdown, visual approaches, misconceptions to avoid, analogies)
-   - **Step Image** (gemini-3-pro-image-preview, 120s timeout): Renders high-quality step infographic
-4. All steps collected into `InfographicStep[]` array and stored as a sequence
+   - **Step Visual Plan** (gemini-2.5-flash): Design specification for the step visualization, enriched with Style DNA context (includes hex codes, exact specifications, replicate-exactly instructions) and research context
+   - **Step Image** (gemini-3-pro-image-preview with seed, 120s timeout): Renders high-quality step infographic using fixed seed for deterministic output
+6. All steps collected into `InfographicStep[]` array and stored as a sequence with styleDNA and seed metadata
 
 All generated infographics (single images and sequences) are stored in InstantDB and displayed in a filterable gallery. Users can view details, edit images via natural language prompts (per-step for sequences), or download them.
 
@@ -89,10 +91,12 @@ All generated infographics (single images and sequences) are stored in InstantDB
 **App.tsx** is the main component containing all state management:
 
 - **Generation State (Single)**: `searchMode`, `query`, `facts[]`, `selectedFact`, `loading`, `loadingMessage`, `currentPlan`, `currentImage`
-- **Generation State (Process/Sequence)**: `processStructure`, `currentSequence[]`, `currentStepIndex`
+- **Generation State (Process/Sequence)**: `processStructure`, `currentSequence[]`, `currentStepIndex`, `currentStyleDNA`, `currentSeed`
   - `processStructure`: Contains `processName`, `domain`, `overviewText`, `suggestedSteps`, `stepTitles[]`
   - `currentSequence`: Array of completed `InfographicStep` objects being built during generation
   - `currentStepIndex`: Tracks which step is currently being generated (for progress display)
+  - `currentStyleDNA`: Structured visual specification generated once for the entire sequence (contains artStylePrompt, colorPalette, lightingAndAtmosphere, compositionRules, typographyStyle)
+  - `currentSeed`: Fixed random seed (integer 0-999999) used for reproducible image generation across all steps
 - **UI State**: `appState` (tracks screens: input → selection → planning → generating → result → gallery)
 - **Gallery Filters**: `filterDomain`, `filterAudience`, `filterStyle`, `filterLanguage`, `gallerySearchQuery`
 - **Configuration State**: `language`, `audience`, `imageModel`, `aspectRatio`, `artStyle`
@@ -124,10 +128,12 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
 
 #### Process/Sequence Functions
 - `generateProcessStructure()`: Discovers process steps and structure (4-6 steps, titles, overview)
+- `generateVisualStyleDNA()`: Generates comprehensive visual specification for entire sequence (includes artStylePrompt, colorPalette with 5 specific colors, lightingAndAtmosphere, compositionRules with titleStyle/badgeStyle/layoutTemplate, typographyStyle) using JSON schema validation - returns null if generation fails (fallback to legacy system)
 - `generateStepExplanation()`: Generates detailed text explanation for a single step
-- `generateStepInfographicPlan()`: Creates visual design specification for a step (accepts `domain` and `completedSteps` for consistency tracking)
-- `generateInfographicImage()` with 120s timeout: Renders high-quality step image (includes educational text and consistency guidance)
-- `buildVisualConsistencyContext()`: Internal helper that generates consistency instructions based on previous steps (injects Step 1 plan for enforcement)
+- `generateStepInfographicPlan()`: Creates visual design specification for a step (accepts `styleDNA` parameter for consistent specifications, with graceful fallback to legacy `buildVisualConsistencyContextLegacy()` if DNA is null)
+- `generateInfographicImage()` with optional seed and 120s timeout: Renders high-quality step image (includes educational text, accepts optional seed parameter for reproducible generation)
+- `buildStyleDNAContext()`: Internal helper that converts Style DNA into lightweight context instructions for prompts (replaces verbose Step 1-based consistency)
+- `buildVisualConsistencyContextLegacy()`: Legacy fallback function (marked DEPRECATED) that generates consistency instructions based on previous steps
 
 **Context Injection Pattern**: All generation functions accept `audience` and `artStyle` parameters. The `injectContext()` helper replaces placeholders in prompts with audience-specific tone/visual guidance and art style descriptions.
 
@@ -203,6 +209,8 @@ InstantDB schema stores infographics with:
   - `plan`: Step-specific visual design specification
   - `imageUrl`: Base64-encoded step image
 - `totalSteps`: Total number of steps in sequence
+- `styleDNA`: Optional VisualStyleDNA object containing unified visual specification for the sequence (artStylePrompt, colorPalette with 5 colors, lightingAndAtmosphere, compositionRules, typographyStyle)
+- `seed`: Optional integer (0-999999) fixed seed used for reproducible image generation
 - `processResearch`: Optional Perplexity research data for the process (accuracy findings, step breakdown, visual guidance, misconceptions, analogies)
 
 #### Research Fields
@@ -258,19 +266,39 @@ A new feature for creating educational content about multi-step processes. Users
 - **Robust Error Handling**: Identifies which step failed and provides specific error context
 - **Comprehensive Logging**: Detailed console logs for debugging process generation
 
-### Visual Consistency System
+### Style DNA System
 
-The `buildVisualConsistencyContext()` function in geminiService.ts ensures visual coherence across all steps in a sequence:
+The Style DNA system generates a comprehensive, reusable visual specification once at the beginning of process generation, then applies it consistently to all steps using a fixed seed for deterministic image generation.
 
-**For Step 1 (Foundation)**:
-- Establishes visual conventions: title text design, step badge design, color palette, illustration style, layout conventions
-- All choices are documented in the plan and MUST be replicated in subsequent steps
+#### What is Style DNA?
+A `VisualStyleDNA` object containing:
+- **artStylePrompt**: Detailed art style description tailored to audience and selected art style
+- **colorPalette**: 5-color palette with specific hex codes (primary, secondary, accent, background, text)
+- **lightingAndAtmosphere**: Lighting style, mood, and environmental context
+- **compositionRules**: Layout specifications including:
+  - **titleStyle**: Title text size, font, positioning, styling rules
+  - **badgeStyle**: Step badge ("STEP X/Y") design and positioning
+  - **layoutTemplate**: Overall layout structure and spacing conventions
+- **typographyStyle**: Font families, sizes, and styling for different text types
 
-**For Steps 2+ (Enforcement)**:
-- The COMPLETE Step 1 plan is injected into the prompt context
-- Model must READ and COPY exact specifications (hex codes, sizes, positions)
-- Explicit instructions to replicate: title text, step badge, color palette, illustration style, layout template, text styles
-- Lists content already covered to prevent overlap
+#### Generation Process
+1. `generateVisualStyleDNA()` is called after process research is complete
+2. Uses Gemini Flash with JSON schema validation for structured output
+3. Returns complete `VisualStyleDNA` object with explicit hex codes and exact specifications
+4. If generation fails: gracefully falls back to legacy `buildVisualConsistencyContextLegacy()` system
+5. Fixed seed (0-999999) is generated for reproducible image generation
+
+#### Application to Steps
+- `buildStyleDNAContext()` converts Style DNA into lightweight (~500-800 chars) context instructions
+- These instructions are embedded in each step's visual plan prompt
+- Instructions include: exact hex codes, replicate-exactly directives, component specifications
+- Fixed seed is passed to `generateInfographicImage()` for each step to ensure consistency
+
+#### Backward Compatibility
+- Style DNA is optional - if generation fails, app continues with legacy system
+- Stored in database under `styleDNA` field (only saved if exists)
+- New sequences have Style DNA; older sequences regenerated without it still work
+- Both systems produce visually consistent multi-step sequences
 
 ### Educational Text Requirements
 
