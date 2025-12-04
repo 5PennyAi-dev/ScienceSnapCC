@@ -42,26 +42,28 @@ export const DomainSelector: React.FC<DomainSelectorProps> = ({ onSelect, langua
 
   const getDomainLabel = (id: DomainId): string => {
     const key = domainTranslationKeys[id];
-    return (t as Record<string, string>)[key] || id;
+    return (t as any)[key] || id;
   };
 
   return (
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-bold text-sm hover:shadow-lg hover:scale-105 transition-all"
+        className={`flex items-center gap-2 px-4 py-3 glass-panel rounded-xl font-bold text-sm transition-all w-full justify-between group ${isOpen ? 'neon-border-cyan' : 'border-white/10'}`}
       >
-        <Microscope className="w-4 h-4" />
-        <span>{t.selectDomain}</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2">
+            <Microscope className="w-4 h-4 text-science-cyan" />
+            <span className="text-white group-hover:text-science-cyan transition-colors">{t.selectDomain}</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-science-cyan' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 bg-white border-2 border-cyan-300 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in">
-          <div className="p-3 border-b-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50">
-            <p className="text-xs font-bold uppercase tracking-widest text-cyan-700">{t.selectDomain}</p>
+        <div className="absolute top-full left-0 mt-2 w-72 glass-panel bg-slate-900/95 border-white/10 rounded-xl shadow-2xl overflow-hidden z-[100] animate-fade-in backdrop-blur-xl">
+          <div className="p-3 border-b border-white/10 bg-white/5">
+            <p className="text-xs font-bold uppercase tracking-widest text-science-cyan">{t.selectDomain}</p>
           </div>
-          <div className="p-2 max-h-80 overflow-y-auto">
+          <div className="p-2 max-h-80 overflow-y-auto custom-scrollbar">
             {SCIENTIFIC_DOMAINS.map((domain) => (
               <button
                 key={domain.id}
@@ -69,9 +71,9 @@ export const DomainSelector: React.FC<DomainSelectorProps> = ({ onSelect, langua
                   onSelect(getDomainLabel(domain.id));
                   setIsOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-cyan-50 hover:scale-[1.02] text-gray-700"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all hover:bg-white/10 text-slate-300 hover:text-white group"
               >
-                <span className="text-xl">{domain.emoji}</span>
+                <span className="text-xl group-hover:scale-110 transition-transform">{domain.emoji}</span>
                 <span>{getDomainLabel(domain.id)}</span>
               </button>
             ))}

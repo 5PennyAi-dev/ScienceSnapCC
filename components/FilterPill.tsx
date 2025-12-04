@@ -47,33 +47,33 @@ export const FilterPill: React.FC<FilterPillProps> = ({
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${
+        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border ${
           isActive || isOpen
-            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400 shadow-lg shadow-cyan-500/50 scale-105'
-            : 'bg-white border-2 border-cyan-300 text-cyan-700 hover:border-cyan-400 hover:shadow-md'
+            ? 'bg-science-blue/20 text-science-cyan border-science-cyan shadow-lg shadow-science-cyan/20 scale-105'
+            : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30 hover:text-white hover:bg-white/10'
         }`}
       >
-        <span>{label}:</span>
+        <span className="opacity-70">{label}:</span>
         <span className="truncate max-w-[100px] font-bold">{displayValue}</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-56 bg-white border-2 border-cyan-300 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div className="max-h-60 overflow-y-auto py-2">
+        <div className="absolute top-full left-0 mt-2 w-56 glass-panel bg-slate-900/95 border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 backdrop-blur-xl">
+          <div className="max-h-60 overflow-y-auto py-2 custom-scrollbar">
             <button
                 onClick={() => {
                   onSelect('All');
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-4 py-3 text-xs font-bold flex items-center justify-between transition-all ${
-                  value === 'All' ? 'bg-cyan-100 text-cyan-700 border-l-4 border-cyan-500' : 'text-gray-700 hover:bg-gray-50'
+                  value === 'All' ? 'bg-science-blue/20 text-science-cyan border-l-2 border-science-cyan' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
             >
                 <span>{allLabel}</span>
-                {value === 'All' && <Check className="w-4 h-4 text-teal-500 font-bold" />}
+                {value === 'All' && <Check className="w-4 h-4 text-science-cyan font-bold" />}
             </button>
-            <div className="h-px bg-gray-200 my-1"></div>
+            <div className="h-px bg-white/10 my-1"></div>
             {normalizedOptions.map((opt) => (
               <button
                 key={opt.value}
@@ -82,11 +82,11 @@ export const FilterPill: React.FC<FilterPillProps> = ({
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-4 py-3 text-xs font-medium flex items-center justify-between transition-all ${
-                  value === opt.value ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-50'
+                  value === opt.value ? 'bg-science-blue/10 text-science-blue border-l-2 border-science-blue' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <span>{opt.label}</span>
-                {value === opt.value && <Check className="w-4 h-4 text-teal-500 font-bold" />}
+                {value === opt.value && <Check className="w-4 h-4 text-science-cyan font-bold" />}
               </button>
             ))}
           </div>

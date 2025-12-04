@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData, PerplexityResearchData } from './types';
+import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData, PerplexityResearchData, Folder } from './types';
 import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, generateVisualStyleDNA, ConceptSuggestion, ProcessSuggestion } from './services/geminiService';
 import { researchFactForInfographic, researchProcessForEducation } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
@@ -12,7 +12,10 @@ import { FilterPill } from './components/FilterPill';
 import { DomainSelector } from './components/DomainSelector';
 import { ConceptSelector } from './components/ConceptSelector';
 import { ProcessSelector } from './components/ProcessSelector';
-import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle, X } from 'lucide-react';
+import { FolderList } from './components/FolderList';
+import { Layout } from './components/Layout';
+import { Dashboard } from './components/Dashboard';
+import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle, X, Palette, FileDigit, Box, Tent, Droplet, Cpu, Coffee } from 'lucide-react';
 import { db } from './db';
 import { tx, id } from "@instantdb/react";
 import { getTranslation } from './translations';
@@ -24,7 +27,7 @@ const App: React.FC = () => {
   const [imageModel, setImageModel] = useState<ImageModelType>(IMAGE_MODEL_PRO);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.TALL);
   const [artStyle, setArtStyle] = useState<ArtStyle>('DEFAULT');
-  const [appState, setAppState] = useState<AppState>('input');
+  const [appState, setAppState] = useState<AppState>('dashboard');
   
   // Search State for Generation
   const [searchMode, setSearchMode] = useState<SearchMode>('domain');
@@ -71,6 +74,10 @@ const App: React.FC = () => {
   const [filterStyle, setFilterStyle] = useState<string>('All');
   const [filterLanguage, setFilterLanguage] = useState<string>('All');
   const [gallerySearchQuery, setGallerySearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   
   // Modal State
   const [selectedGalleryItem, setSelectedGalleryItem] = useState<InfographicItem | null>(null);
@@ -84,7 +91,8 @@ const App: React.FC = () => {
 
   // Database Query
   const { isLoading: isLoadingGallery, error: galleryError, data } = db.useQuery({ 
-    infographics: {} 
+    infographics: {},
+    folders: {}
   });
   
   // Flatten DB data to match InfographicItem[] (supports both single images and sequences)
@@ -110,7 +118,8 @@ const App: React.FC = () => {
           style: item.style,
           audience: item.audience,
           modelName: item.modelName,
-          language: item.language
+          language: item.language,
+          folderId: item.folderId
         } as InfographicItem;
       } else {
         // Legacy single-image format
@@ -128,10 +137,17 @@ const App: React.FC = () => {
           style: item.style,
           audience: item.audience,
           modelName: item.modelName,
-          language: item.language
+          language: item.language,
+          folderId: item.folderId
         } as InfographicItem;
       }
     }).sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+  }, [data]);
+
+  // Derived state for folders
+  const folders: Folder[] = useMemo(() => {
+    if (!data?.folders) return [];
+    return Object.values(data.folders).sort((a: any, b: any) => b.timestamp - a.timestamp) as Folder[];
   }, [data]);
 
   // Derived state for domains
@@ -142,7 +158,8 @@ const App: React.FC = () => {
 
   // Derived state for filtered items
   const filteredGallery = useMemo(() => {
-    return gallery.filter(item => {
+    console.log('📊 filteredGallery recalculating - gallery count:', gallery.length);
+    const result = gallery.filter(item => {
         const matchDomain = filterDomain === 'All' || item.fact.domain === filterDomain;
         const matchAudience = filterAudience === 'All' || item.audience === filterAudience;
         const matchStyle = filterStyle === 'All' || item.style === filterStyle;
@@ -154,9 +171,13 @@ const App: React.FC = () => {
                             item.fact.title.toLowerCase().includes(searchLower) ||
                             item.fact.domain.toLowerCase().includes(searchLower);
 
-        return matchDomain && matchAudience && matchStyle && matchLanguage && matchSearch;
+        const matchFolder = selectedFolderId === null || item.folderId === selectedFolderId;
+
+        return matchDomain && matchAudience && matchStyle && matchLanguage && matchSearch && matchFolder;
     });
-  }, [gallery, filterDomain, filterAudience, filterStyle, filterLanguage, gallerySearchQuery]);
+    console.log('📊 filteredGallery result count:', result.length);
+    return result;
+  }, [gallery, filterDomain, filterAudience, filterStyle, filterLanguage, gallerySearchQuery, selectedFolderId]);
 
   const hasActiveFilters = filterDomain !== 'All' || filterAudience !== 'All' || filterStyle !== 'All' || filterLanguage !== 'All' || gallerySearchQuery !== '';
 
@@ -166,7 +187,14 @@ const App: React.FC = () => {
       setFilterStyle('All');
       setFilterLanguage('All');
       setGallerySearchQuery('');
+      setCurrentPage(1);
+      setSelectedFolderId(null);
   };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterDomain, filterAudience, filterStyle, filterLanguage, gallerySearchQuery, selectedFolderId]);
 
   // Monitor gallery query errors
   useEffect(() => {
@@ -673,6 +701,37 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCreateFolder = async (name: string) => {
+    const newFolderId = id();
+    await db.transact(db.tx.folders[newFolderId].update({
+      id: newFolderId,
+      name,
+      timestamp: Date.now()
+    }));
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    await db.transact(db.tx.folders[folderId].delete());
+    if (selectedFolderId === folderId) {
+      setSelectedFolderId(null);
+    }
+  };
+
+  const handleDropItem = async (folderId: string, itemId: string) => {
+    await db.transact(db.tx.infographics[itemId].update({
+      folderId
+    }));
+    setDraggedItemId(null);
+  };
+
+  const handleDragStart = (itemId: string) => {
+    // setDraggedItemId(itemId); // Disable to prevent re-renders causing UI issues
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItemId(null);
+  };
+
   const handleGalleryClick = (item: InfographicItem) => {
     setSelectedGalleryItem(item);
     setIsModalOpen(true);
@@ -761,7 +820,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen text-gray-800 pb-12 relative">
+    <Layout appState={appState} setAppState={setAppState}>
       {/* Error Toast / Banner */}
       {error && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-slide-down">
@@ -778,200 +837,238 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation / Header */}
-      <nav className="sticky top-0 z-40 bg-white shadow-lg border-b-4 border-gradient">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div
-            className="flex items-center gap-2 cursor-pointer group"
-            onClick={() => setAppState('input')}
-          >
-            <div className="bg-gradient-to-br from-cyan-500 via-blue-500 to-teal-400 p-2 rounded-lg group-hover:rotate-12 transition-transform shadow-lg">
-                <Atom className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-xl tracking-tight text-gray-800">
-                {t.appTitle}
-            </span>
+      {/* DASHBOARD STATE */}
+      {appState === 'dashboard' && (
+        <Dashboard onSelectMode={(mode) => {
+          setSearchMode(mode);
+          setAppState('input');
+        }} />
+      )}
+
+      {/* INPUT MODE */}
+      {appState === 'input' && (
+        <div className="flex gap-6 max-w-7xl mx-auto animate-fade-in pt-8">
+          
+          {/* Left Sidebar - Controls */}
+          <div className="w-72 flex-shrink-0 space-y-4">
+              <button 
+                onClick={() => setAppState('dashboard')}
+                className="w-full p-2 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="text-sm font-bold">Retour</span>
+              </button>
+
+              {/* Audience Toggle */}
+              <div className="glass-panel p-3 rounded-2xl border border-white/10">
+                  <p className="text-xs font-bold text-science-cyan mb-3 px-1">AUDIENCE</p>
+                  <div className="space-y-2">
+                      <button
+                          onClick={() => setAudience('young')}
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 transition-all ${audience === 'young' ? 'bg-science-blue text-white shadow-lg shadow-science-blue/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                      >
+                          <Baby className="w-5 h-5" />
+                          <span>{t.audienceKids}</span>
+                      </button>
+                      <button
+                          onClick={() => setAudience('adult')}
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 transition-all ${audience === 'adult' ? 'bg-science-blue text-white shadow-lg shadow-science-blue/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                      >
+                          <GraduationCap className="w-5 h-5" />
+                          <span>{t.audienceAdults}</span>
+                      </button>
+                  </div>
+              </div>
+
+              {/* Style Selector Pills */}
+              <div className="glass-panel p-3 rounded-2xl border border-white/10">
+                  <p className="text-xs font-bold text-science-cyan mb-3 px-1">STYLE ARTISTIQUE</p>
+                  <div className="grid grid-cols-2 gap-2">
+                      <button
+                          onClick={() => setArtStyle('DEFAULT')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'DEFAULT' ? 'bg-indigo-500/30 text-indigo-300 shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-indigo-300'}`}
+                      >
+                          <Palette className="w-5 h-5" />
+                          <span className="font-bold">Default</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('PIXEL')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'PIXEL' ? 'bg-green-500/30 text-green-300 shadow-lg shadow-green-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-green-300'}`}
+                      >
+                          <FileDigit className="w-5 h-5" />
+                          <span className="font-bold">Pixel</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('CLAY')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'CLAY' ? 'bg-orange-500/30 text-orange-300 shadow-lg shadow-orange-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-orange-300'}`}
+                      >
+                          <Box className="w-5 h-5" />
+                          <span className="font-bold">Clay</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('ORIGAMI')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'ORIGAMI' ? 'bg-yellow-500/30 text-yellow-300 shadow-lg shadow-yellow-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-yellow-300'}`}
+                      >
+                          <Tent className="w-5 h-5" />
+                          <span className="font-bold">Origami</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('WATERCOLOR')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'WATERCOLOR' ? 'bg-blue-500/30 text-blue-300 shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-blue-300'}`}
+                      >
+                          <Droplet className="w-5 h-5" />
+                          <span className="font-bold">Watercolor</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('CYBERPUNK')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'CYBERPUNK' ? 'bg-cyan-500/30 text-cyan-300 shadow-lg shadow-cyan-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-cyan-300'}`}
+                      >
+                          <Cpu className="w-5 h-5" />
+                          <span className="font-bold">Cyberpunk</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('VINTAGE')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'VINTAGE' ? 'bg-amber-500/30 text-amber-300 shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-amber-300'}`}
+                      >
+                          <Coffee className="w-5 h-5" />
+                          <span className="font-bold">Vintage</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('NEON')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'NEON' ? 'bg-purple-500/30 text-purple-300 shadow-lg shadow-purple-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-purple-300'}`}
+                      >
+                          <Zap className="w-5 h-5" />
+                          <span className="font-bold">Neon</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('MANGA')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'MANGA' ? 'bg-red-500/30 text-red-300 shadow-lg shadow-red-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-red-300'}`}
+                      >
+                          <BookOpen className="w-5 h-5" />
+                          <span className="font-bold">Manga</span>
+                      </button>
+                      <button
+                          onClick={() => setArtStyle('GHIBLI')}
+                          className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 text-xs ${artStyle === 'GHIBLI' ? 'bg-pink-500/30 text-pink-300 shadow-lg shadow-pink-500/20' : 'text-slate-400 hover:bg-white/10 hover:text-pink-300'}`}
+                      >
+                          <Sparkles className="w-5 h-5" />
+                          <span className="font-bold">Ghibli</span>
+                      </button>
+                  </div>
+              </div>
+
+              {/* Ratio Selector */}
+              <div className="glass-panel p-3 rounded-2xl border border-white/10">
+                  <p className="text-xs font-bold text-science-cyan mb-3 px-1">FORMAT</p>
+                  <div className="space-y-2">
+                      <button
+                          onClick={() => setAspectRatio(AspectRatio.SQUARE)}
+                          className={`w-full p-3 rounded-xl transition-all flex items-center gap-3 text-sm font-bold ${aspectRatio === AspectRatio.SQUARE ? 'bg-science-cyan text-white shadow-lg shadow-science-cyan/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                      >
+                          <Square className="w-4 h-4" />
+                          <span>{t.ratioSquare}</span>
+                      </button>
+                      <button
+                          onClick={() => setAspectRatio(AspectRatio.PORTRAIT)}
+                          className={`w-full p-3 rounded-xl transition-all flex items-center gap-3 text-sm font-bold ${aspectRatio === AspectRatio.PORTRAIT ? 'bg-science-cyan text-white shadow-lg shadow-science-cyan/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                      >
+                          <RectangleVertical className="w-4 h-4" />
+                          <span>{t.ratioPortrait}</span>
+                      </button>
+                      <button
+                          onClick={() => setAspectRatio(AspectRatio.INSTAGRAM)}
+                          className={`w-full p-3 rounded-xl transition-all flex items-center gap-3 text-sm font-bold ${aspectRatio === AspectRatio.INSTAGRAM ? 'bg-science-cyan text-white shadow-lg shadow-science-cyan/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                      >
+                          <RectangleVertical className="w-4 h-4 opacity-75" />
+                          <span>4:5 (Instagram)</span>
+                      </button>
+                      <button
+                          onClick={() => setAspectRatio(AspectRatio.LANDSCAPE)}
+                          className={`w-full p-3 rounded-xl transition-all flex items-center gap-3 text-sm font-bold ${aspectRatio === AspectRatio.LANDSCAPE ? 'bg-science-cyan text-white shadow-lg shadow-science-cyan/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                      >
+                          <RectangleHorizontal className="w-4 h-4" />
+                          <span>{t.ratioLandscape}</span>
+                      </button>
+                      <button
+                          onClick={() => setAspectRatio(AspectRatio.TALL)}
+                          className={`w-full p-3 rounded-xl transition-all flex items-center gap-3 text-sm font-bold ${aspectRatio === AspectRatio.TALL ? 'bg-science-cyan text-white shadow-lg shadow-science-cyan/20' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
+                      >
+                          <Smartphone className="w-4 h-4" />
+                          <span>{t.ratioTall}</span>
+                      </button>
+                  </div>
+              </div>
           </div>
 
-          <div className="flex items-center gap-3">
-             {/* Gallery button - Always Visible */}
-             <button
-                onClick={() => setAppState('gallery')}
-                className={`p-2 rounded-lg transition-all ${appState === 'gallery' ? 'bg-cyan-100 text-cyan-600' : 'text-gray-600 hover:text-cyan-500'}`}
-                title={t.gallery}
-             >
-                <Grid3X3 className="w-5 h-5" />
-             </button>
-             <div className="h-6 w-px bg-gray-200 mx-1"></div>
-             <button
-                onClick={() => setLanguage(l => l === 'en' ? 'fr' : 'en')}
-                className="text-xs font-bold px-3 py-1 rounded-full border-2 border-cyan-400 text-cyan-600 hover:bg-cyan-50 transition-all"
-             >
-                {language.toUpperCase()}
-             </button>
+          {/* Main Content Area */}
+          <div className="flex-1">
+            <div className="mb-8">
+              <h2 className="text-2xl font-display font-bold text-white mb-2">
+                {searchMode === 'domain' ? 'Explore Domain' : searchMode === 'concept' ? 'Explain Concept' : 'Process Sequence'}
+              </h2>
+              <p className="text-slate-400 text-sm">
+                {searchMode === 'domain' ? 'Discover facts across scientific fields' : searchMode === 'concept' ? 'Deep dive into specific concepts' : 'Visualize step-by-step processes'}
+              </p>
+            </div>
+
+          {/* Search Box */}
+          <div className="glass-panel rounded-3xl p-6 shadow-2xl relative overflow-visible">
+              {/* Domain Selector - only visible in domain mode */}
+              {searchMode === 'domain' && (
+                  <div className="mb-6">
+                      <DomainSelector
+                          onSelect={(domain) => setQuery(domain)}
+                          language={language}
+                      />
+                  </div>
+              )}
+
+              {/* Concept Selector - only visible in concept mode */}
+              {searchMode === 'concept' && (
+                  <div className="mb-6">
+                      <ConceptSelector
+                          onSelect={(concept) => setQuery(concept)}
+                          language={language}
+                          suggestions={conceptSuggestions}
+                          isLoading={conceptSuggestionsLoading}
+                      />
+                  </div>
+              )}
+
+              {/* Process Selector - only visible in process mode */}
+              {searchMode === 'process' && (
+                  <div className="mb-6">
+                      <ProcessSelector
+                          onSelect={(process) => setQuery(process)}
+                          language={language}
+                          suggestions={processSuggestions}
+                          isLoading={processSuggestionsLoading}
+                      />
+                  </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-science-blue/20 to-science-purple/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder={searchMode === 'domain' ? t.placeholderDomain : searchMode === 'concept' ? t.placeholderConcept : t.placeholderProcess}
+                      className="w-full bg-slate-900/80 border border-white/10 text-white text-lg p-5 pl-6 pr-40 rounded-xl focus:outline-none focus:border-science-cyan/50 focus:ring-1 focus:ring-science-cyan/50 placeholder:text-slate-500 transition-all relative z-10 shadow-inner"
+                  />
+                  <button
+                      type="submit"
+                      disabled={!query.trim()}
+                      className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-science-cyan to-science-blue text-white rounded-lg font-bold hover:shadow-lg hover:shadow-science-cyan/20 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 z-20"
+                  >
+                      {searchMode === 'domain' ? t.btnDiscover : searchMode === 'concept' ? t.btnVisualize : t.btnDiscover}
+                      <ArrowRight className="w-4 h-4" />
+                  </button>
+              </form>
+          </div>
           </div>
         </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* INPUT MODE */}
-        {appState === 'input' && (
-          <div className="max-w-3xl mx-auto animate-fade-in">
-            
-            {/* Hero Text */}
-            <div className="text-center mb-12">
-               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500">
-                  {t.heroTitlePrefix} <span>{t.heroTitleHighlight}</span> {t.heroTitleMiddle} <span>{t.heroTitleSuffix}</span>
-               </h1>
-               <p className="text-gray-700 text-lg max-w-2xl mx-auto font-medium">
-                  {t.heroSubtitle}
-               </p>
-            </div>
-
-            {/* Controls Toolbar */}
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
-                {/* Audience Toggle */}
-                <div className="bg-cyan-100 p-1.5 rounded-full border-2 border-cyan-300 flex items-center shadow-md">
-                    <button
-                        onClick={() => setAudience('young')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'young' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg scale-105' : 'text-cyan-700 hover:bg-cyan-200'}`}
-                    >
-                        <Baby className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t.audienceKids}</span>
-                    </button>
-                    <button
-                        onClick={() => setAudience('adult')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all ${audience === 'adult' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg scale-105' : 'text-cyan-700 hover:bg-cyan-200'}`}
-                    >
-                        <GraduationCap className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t.audienceAdults}</span>
-                    </button>
-                </div>
-
-                {/* Style Selector */}
-                <div className="bg-blue-100 p-1.5 rounded-full border-2 border-blue-300 flex items-center shadow-md">
-                    <StyleSelector
-                        selectedStyle={artStyle}
-                        onSelect={setArtStyle}
-                        labels={t}
-                    />
-                </div>
-
-                {/* Model & Ratio Toggles (Compact) */}
-                <div className="bg-cyan-100 p-1.5 rounded-full border-2 border-cyan-300 flex items-center gap-1 shadow-md">
-                    <button
-                        onClick={() => setImageModel(m => m === IMAGE_MODEL_FLASH ? IMAGE_MODEL_PRO : IMAGE_MODEL_FLASH)}
-                        className="p-2 rounded-full hover:bg-cyan-200 text-cyan-700 transition-all"
-                        title={imageModel === IMAGE_MODEL_FLASH ? "Fast Mode" : "Pro Mode (High Quality)"}
-                    >
-                        {imageModel === IMAGE_MODEL_FLASH ? <Zap className="w-4 h-4" /> : <Star className="w-4 h-4 text-yellow-500" />}
-                    </button>
-                    <div className="w-px h-4 bg-cyan-300"></div>
-                    <button
-                         onClick={() => {
-                             const ratios = [AspectRatio.SQUARE, AspectRatio.PORTRAIT, AspectRatio.INSTAGRAM, AspectRatio.LANDSCAPE, AspectRatio.TALL];
-                             const nextIdx = (ratios.indexOf(aspectRatio) + 1) % ratios.length;
-                             setAspectRatio(ratios[nextIdx]);
-                         }}
-                         className="p-2 rounded-full hover:bg-cyan-200 text-cyan-700 transition-all"
-                         title={
-                             aspectRatio === AspectRatio.SQUARE ? t.ratioSquare :
-                             aspectRatio === AspectRatio.PORTRAIT ? t.ratioPortrait :
-                             aspectRatio === AspectRatio.INSTAGRAM ? '4:5 (Instagram)' :
-                             aspectRatio === AspectRatio.LANDSCAPE ? t.ratioLandscape :
-                             t.ratioTall
-                         }
-                    >
-                        {aspectRatio === AspectRatio.SQUARE && <Square className="w-4 h-4" />}
-                        {aspectRatio === AspectRatio.PORTRAIT && <RectangleVertical className="w-4 h-4" />}
-                        {aspectRatio === AspectRatio.INSTAGRAM && <RectangleVertical className="w-4 h-4 opacity-75" />}
-                        {aspectRatio === AspectRatio.LANDSCAPE && <RectangleHorizontal className="w-4 h-4" />}
-                        {aspectRatio === AspectRatio.TALL && <Smartphone className="w-4 h-4" />}
-                    </button>
-                </div>
-            </div>
-
-            {/* Search Box */}
-            <div className="bg-white border-4 border-cyan-300 rounded-xl p-3 shadow-xl">
-                <div className="flex border-b-2 border-cyan-200 mb-2">
-                    <button
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'domain' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 'text-gray-600 hover:text-cyan-600'}`}
-                        onClick={() => setSearchMode('domain')}
-                    >
-                        <Search className="w-4 h-4" />
-                        {t.tabDomain}
-                    </button>
-                    <button
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'concept' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 'text-gray-600 hover:text-cyan-600'}`}
-                        onClick={() => setSearchMode('concept')}
-                    >
-                        <Lightbulb className="w-4 h-4" />
-                        {t.tabConcept}
-                    </button>
-                    <button
-                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${searchMode === 'process' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 'text-gray-600 hover:text-cyan-600'}`}
-                        onClick={() => setSearchMode('process')}
-                    >
-                        <ArrowRight className="w-4 h-4" />
-                        {t.tabProcess}
-                    </button>
-                </div>
-
-                {/* Domain Selector - only visible in domain mode */}
-                {searchMode === 'domain' && (
-                    <div className="mb-3 flex justify-start">
-                        <DomainSelector
-                            onSelect={(domain) => setQuery(domain)}
-                            language={language}
-                        />
-                    </div>
-                )}
-
-                {/* Concept Selector - only visible in concept mode */}
-                {searchMode === 'concept' && (
-                    <div className="mb-3 flex justify-start">
-                        <ConceptSelector
-                            onSelect={(concept) => setQuery(concept)}
-                            language={language}
-                            suggestions={conceptSuggestions}
-                            isLoading={conceptSuggestionsLoading}
-                        />
-                    </div>
-                )}
-
-                {/* Process Selector - only visible in process mode */}
-                {searchMode === 'process' && (
-                    <div className="mb-3 flex justify-start">
-                        <ProcessSelector
-                            onSelect={(process) => setQuery(process)}
-                            language={language}
-                            suggestions={processSuggestions}
-                            isLoading={processSuggestionsLoading}
-                        />
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="relative">
-                    <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={searchMode === 'domain' ? t.placeholderDomain : searchMode === 'concept' ? t.placeholderConcept : t.placeholderProcess}
-                        className="w-full bg-transparent text-gray-800 text-lg p-4 pl-6 pr-40 focus:outline-none placeholder:text-gray-400"
-                    />
-                    <button
-                        type="submit"
-                        disabled={!query.trim()}
-                        className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg"
-                    >
-                        {searchMode === 'domain' ? t.btnDiscover : searchMode === 'concept' ? t.btnVisualize : t.btnDiscover}
-                        <ArrowRight className="w-4 h-4" />
-                    </button>
-                </form>
-            </div>
-          </div>
-        )}
+      )}
 
         {/* SELECTION STATE */}
         {appState === 'selection' && (
@@ -1128,23 +1225,37 @@ const App: React.FC = () => {
 
         {/* GALLERY STATE */}
         {appState === 'gallery' && (
-            <div className="animate-fade-in max-w-7xl mx-auto">
-                {/* Gallery Header */}
-                <div className="flex flex-col gap-6 mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setAppState('input')}
-                                className="p-2 bg-cyan-100 rounded-lg hover:bg-cyan-200 transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5 text-cyan-600" />
-                            </button>
-                            <h2 className="text-3xl font-bold text-gray-800">{t.galleryTitle}</h2>
-                        </div>
+            <div className="animate-fade-in max-w-7xl mx-auto flex gap-6">
+                {/* Left Sidebar - Folders */}
+                <div className="w-64 flex-shrink-0">
+                    <div className="mb-6">
+                        <button
+                            onClick={() => setAppState('input')}
+                            className="flex items-center gap-2 text-slate-500 hover:text-cyan-600 transition-colors mb-4"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            <span className="font-bold text-sm">Retour</span>
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-800">{t.galleryTitle}</h2>
                     </div>
 
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+                        <FolderList
+                            folders={folders}
+                            selectedFolderId={selectedFolderId}
+                            onSelectFolder={setSelectedFolderId}
+                            onCreateFolder={handleCreateFolder}
+                            onDeleteFolder={handleDeleteFolder}
+                            onDropItem={handleDropItem}
+                            draggedItemId={draggedItemId}
+                        />
+                    </div>
+                </div>
+
+                {/* Main Content - Grid & Filters */}
+                <div className="flex-1">
                     {/* Filter Toolbar */}
-                    <div className="bg-white border-2 border-cyan-200 rounded-xl p-3 flex flex-col md:flex-row gap-3 shadow-lg">
+                    <div className="bg-white border-2 border-cyan-200 rounded-xl p-3 flex flex-col md:flex-row gap-3 shadow-lg mb-6">
                         {/* Search Input */}
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
@@ -1183,17 +1294,7 @@ const App: React.FC = () => {
                                 onSelect={setFilterStyle}
                                 allLabel={t.filterAll}
                             />
-                            <FilterPill
-                                label={t.filterLabelLanguage}
-                                value={filterLanguage}
-                                options={[
-                                    { label: 'English', value: 'en' },
-                                    { label: 'Français', value: 'fr' }
-                                ]}
-                                onSelect={setFilterLanguage}
-                                allLabel={t.filterAll}
-                            />
-
+                            
                             {hasActiveFilters && (
                                 <button
                                     onClick={clearFilters}
@@ -1205,38 +1306,79 @@ const App: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </div>
 
-                {isLoadingGallery ? (
-                    <div className="flex justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-                    </div>
-                ) : filteredGallery.length > 0 ? (
-                    <GalleryGrid
-                        items={filteredGallery}
-                        onItemClick={handleGalleryClick}
-                        emptyMessage={t.galleryEmpty}
-                    />
-                ) : (
-                    /* No Results State */
-                    <div className="flex flex-col items-center justify-center py-20 text-center border-4 border-dashed border-cyan-300 rounded-xl bg-cyan-50">
-                        <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
-                            <Filter className="w-8 h-8 text-cyan-500 opacity-70" />
+                    {isLoadingGallery ? (
+                        <div className="flex justify-center py-20">
+                            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">{t.noResultsTitle}</h3>
-                        <p className="text-gray-600 max-w-sm">{t.noResultsDesc}</p>
-                        <button
-                            onClick={clearFilters}
-                            className="mt-6 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-xl text-sm font-bold transition-all"
-                        >
-                            {t.btnResetFilters}
-                        </button>
-                    </div>
-                )}
+                    ) : filteredGallery.length > 0 ? (
+                        <>
+                            <GalleryGrid
+                                items={filteredGallery.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+                                onItemClick={handleGalleryClick}
+                                emptyMessage={t.galleryEmpty}
+                                onDragStart={handleDragStart}
+                                onDragEnd={handleDragEnd}
+                            />
+                            
+                            {/* Pagination Controls */}
+                            {filteredGallery.length > ITEMS_PER_PAGE && (
+                                <div className="flex items-center justify-center gap-2 mt-8">
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-4 py-2 rounded-xl bg-white border-2 border-cyan-300 text-cyan-700 font-bold hover:bg-cyan-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        ← Précédent
+                                    </button>
+                                    
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.ceil(filteredGallery.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(pageNum => (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`px-3 py-2 rounded-lg font-bold text-sm transition-all ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                                                        : 'bg-white border-2 border-cyan-200 text-cyan-700 hover:bg-cyan-50'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredGallery.length / ITEMS_PER_PAGE), p + 1))}
+                                        disabled={currentPage === Math.ceil(filteredGallery.length / ITEMS_PER_PAGE)}
+                                        className="px-4 py-2 rounded-xl bg-white border-2 border-cyan-300 text-cyan-700 font-bold hover:bg-cyan-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        Suivant →
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        /* No Results State */
+                        <div className="flex flex-col items-center justify-center py-20 text-center border-4 border-dashed border-cyan-300 rounded-xl bg-cyan-50">
+                            <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
+                                <Filter className="w-8 h-8 text-cyan-500 opacity-70" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">{t.noResultsTitle}</h3>
+                            <p className="text-gray-600 max-w-sm">{t.noResultsDesc}</p>
+                            <button
+                                onClick={clearFilters}
+                                className="mt-6 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-xl text-sm font-bold transition-all"
+                            >
+                                {t.btnResetFilters}
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         )}
 
-      </main>
+
 
       <ImageModal 
         item={selectedGalleryItem}
@@ -1256,7 +1398,7 @@ const App: React.FC = () => {
             }));
         }}
       />
-    </div>
+    </Layout>
   );
 };
 

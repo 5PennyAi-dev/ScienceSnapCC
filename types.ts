@@ -36,9 +36,10 @@ export interface InfographicItem {
   audience?: Audience;
   modelName?: string;
   language?: Language;
+  folderId?: string;
 }
 
-export type AppState = 'input' | 'selection' | 'planning' | 'generating' | 'result' | 'gallery';
+export type AppState = 'dashboard' | 'input' | 'selection' | 'planning' | 'generating' | 'result' | 'gallery';
 
 export type SearchMode = 'domain' | 'concept' | 'process';
 
@@ -105,4 +106,10 @@ export interface VisualStyleDNA {
     layoutTemplate: string; // Element arrangement rules
   };
   typographyStyle: string; // Font characteristics and hierarchy
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  timestamp: number;
 }

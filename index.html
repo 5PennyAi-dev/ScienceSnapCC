@@ -1,216 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ScienceSnap Infographics</title>
+    <title>ScienceSnap | AI Infographics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        /* Primary Colors - Science-Focused & Modern */
-        --color-primary: #0EA5E9;        /* Cyan (Science) */
-        --color-secondary: #14B8A6;      /* Teal (Labs & Biology) */
-        --color-accent-1: #FCD34D;       /* Solar Yellow (Energy) */
-        --color-accent-2: #34D399;       /* Mint Green (Chemistry) */
-        --color-accent-3: #FB923C;       /* Coral Orange (Warmth) */
-        --color-accent-4: #8B5CF6;       /* Purple Tech (Innovation) */
-        --color-accent-5: #06B6D4;       /* Cyan Bright (Energy) */
-
-        /* Background & Surfaces */
-        --bg-primary: #FFFFFF;
-        --bg-card: rgba(255, 255, 255, 0.95);
-        --bg-overlay: rgba(255, 255, 255, 0.9);
-
-        /* Text */
-        --text-primary: #0F172A;         /* Dark blue-gray */
-        --text-secondary: #334155;       /* Medium blue-gray */
-        --text-light: #64748B;           /* Light blue-gray */
-      }
-
-      body {
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 25%, #14B8A6 50%, #06B6D4 75%, #3B82F6 100%);
-        background-attachment: fixed;
-        position: relative;
-      }
-
-      h1, h2, h3, h4, h5, h6 {
-        font-family: 'Fredoka', sans-serif;
-        font-weight: 700;
-      }
-
-      /* Floating background decorations */
-      body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(20, 184, 166, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: -1;
-        animation: float 20s ease-in-out infinite;
-      }
-
-      /* Animated stars in background */
-      body::after {
-        content: '✨ ⭐ 🌟 ✨ ⭐';
-        position: fixed;
-        top: 10%;
-        left: 5%;
-        font-size: 2rem;
-        opacity: 0.15;
-        pointer-events: none;
-        z-index: 0;
-        animation: twinkle 3s ease-in-out infinite;
-      }
-
-      /* Custom scrollbar for webkit */
-      ::-webkit-scrollbar {
-        width: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-      }
-      ::-webkit-scrollbar-thumb {
-        background: linear-gradient(to bottom, #0EA5E9, #14B8A6);
-        border-radius: 5px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(to bottom, #0EA5E9, #14B8A6);
-        opacity: 0.8;
-      }
-
-      /* Utility to hide scrollbar but allow scrolling */
-      .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-      }
-      .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-      }
-
-      /* Additional science emoji decorations - bottom right */
-      #root::before {
-        content: '⚛️ 🔬 🧪 🧬 🪐';
-        position: fixed;
-        bottom: 10%;
-        right: 5%;
-        font-size: 1.8rem;
-        opacity: 0.15;
-        pointer-events: none;
-        z-index: 0;
-        animation: twinkle 4s ease-in-out infinite;
-        animation-delay: 1.5s;
-      }
-
-      /* Additional science emoji decorations - middle right */
-      #root::after {
-        content: '🧲 ⚡ 💡 🌡️';
-        position: fixed;
-        top: 50%;
-        right: 10%;
-        font-size: 1.5rem;
-        opacity: 0.15;
-        pointer-events: none;
-        z-index: 0;
-        animation: float 25s ease-in-out infinite;
-        animation-delay: 5s;
-      }
-
-      /* Global animations */
-      @keyframes float {
-        0%, 100% {
-          transform: translateY(0px) rotate(0deg);
-        }
-        50% {
-          transform: translateY(-20px) rotate(5deg);
-        }
-      }
-
-      @keyframes twinkle {
-        0%, 100% {
-          opacity: 0.3;
-          transform: scale(1);
-        }
-        50% {
-          opacity: 0.8;
-          transform: scale(1.1);
-        }
-      }
-
-      @keyframes spin-slow {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      @keyframes bounce-light {
-        0%, 100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
-      }
-
-      @keyframes pulse-glow {
-        0%, 100% {
-          box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
-        }
-        50% {
-          box-shadow: 0 0 0 10px rgba(14, 165, 233, 0);
-        }
-      }
-
-      /* Utility classes for animations */
-      .animate-float {
-        animation: float 3s ease-in-out infinite;
-      }
-
-      .animate-bounce-light {
-        animation: bounce-light 2s ease-in-out infinite;
-      }
-
-      .animate-pulse-glow {
-        animation: pulse-glow 2s infinite;
-      }
-
-      .animate-spin-slow {
-        animation: spin-slow 3s linear infinite;
-      }
-    </style>
     <script>
-      // Safe shim for process.env to avoid overwriting injected values
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              slate: {
+                850: '#172033',
+                950: '#020617',
+              },
+              cyan: {
+                450: '#00a8cc',
+              },
+              science: {
+                blue: '#0ea5e9',
+                teal: '#14b8a6',
+                purple: '#8b5cf6',
+                dark: '#0f172a',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
+            },
+            animation: {
+              'spin-slow': 'spin 8s linear infinite',
+            }
+          }
+        }
+      }
+    </script>
+    <script>
+      // Safe shim for process.env
       window.process = window.process || {};
       window.process.env = window.process.env || {};
       if (!window.process.env.NODE_ENV) {
         window.process.env.NODE_ENV = 'development';
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "@instantdb/react": "https://aistudiocdn.com/@instantdb/react@^0.22.68"
-  }
-}
-</script>
-</head>
-  <body class="text-gray-800 antialiased selection:bg-cyan-400 selection:text-white">
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+        "@instantdb/react": "https://aistudiocdn.com/@instantdb/react@^0.22.68"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-slate-950 text-slate-50 antialiased selection:bg-cyan-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-    
   </body>
 </html>

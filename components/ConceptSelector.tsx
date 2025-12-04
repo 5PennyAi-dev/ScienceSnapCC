@@ -36,23 +36,25 @@ export const ConceptSelector: React.FC<ConceptSelectorProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-bold text-sm hover:shadow-lg hover:scale-105 transition-all disabled:opacity-70 disabled:cursor-wait"
+        className={`flex items-center gap-2 px-4 py-3 glass-panel rounded-xl font-bold text-sm transition-all w-full justify-between group disabled:opacity-50 disabled:cursor-wait ${isOpen ? 'neon-border-cyan' : 'border-white/10'}`}
       >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Lightbulb className="w-4 h-4" />
-        )}
-        <span>{isLoading ? t.conceptSuggestionsLoading : t.conceptSuggestionsTitle}</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2">
+            {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-science-cyan" />
+            ) : (
+            <Lightbulb className="w-4 h-4 text-science-cyan" />
+            )}
+            <span className="text-white group-hover:text-science-cyan transition-colors">{isLoading ? t.conceptSuggestionsLoading : t.conceptSuggestionsTitle}</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-science-cyan' : ''}`} />
       </button>
 
       {isOpen && !isLoading && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 mt-2 w-80 bg-white border-2 border-cyan-300 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in">
-          <div className="p-3 border-b-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50">
-            <p className="text-xs font-bold uppercase tracking-widest text-cyan-700">{t.conceptSuggestionsHeader}</p>
+        <div className="absolute top-full left-0 mt-2 w-80 glass-panel bg-slate-900/95 border-white/10 rounded-xl shadow-2xl overflow-hidden z-40 animate-fade-in backdrop-blur-xl">
+          <div className="p-3 border-b border-white/10 bg-white/5">
+            <p className="text-xs font-bold uppercase tracking-widest text-science-cyan">{t.conceptSuggestionsHeader}</p>
           </div>
-          <div className="p-2 max-h-80 overflow-y-auto">
+          <div className="p-2 max-h-80 overflow-y-auto custom-scrollbar">
             {suggestions.map((item, index) => (
               <button
                 key={index}
@@ -60,10 +62,10 @@ export const ConceptSelector: React.FC<ConceptSelectorProps> = ({
                   onSelect(item.concept);
                   setIsOpen(false);
                 }}
-                className="w-full text-left px-4 py-3 rounded-xl text-sm transition-all hover:bg-cyan-50 hover:scale-[1.02]"
+                className="w-full text-left px-4 py-3 rounded-lg text-sm transition-all hover:bg-white/10 text-slate-300 hover:text-white group"
               >
-                <span className="font-bold text-gray-800 block mb-1">{item.concept}</span>
-                <span className="text-xs text-gray-600 line-clamp-2">{item.description}</span>
+                <span className="font-bold text-white group-hover:text-science-cyan block mb-1 transition-colors">{item.concept}</span>
+                <span className="text-xs text-slate-400 group-hover:text-slate-300 line-clamp-2">{item.description}</span>
               </button>
             ))}
           </div>

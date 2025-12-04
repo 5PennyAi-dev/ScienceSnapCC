@@ -141,24 +141,24 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="absolute inset-0 bg-white/70 backdrop-blur-lg"
+          className="absolute inset-0 bg-slate-900/80 backdrop-blur-lg"
           onClick={onClose}
         ></div>
 
-        <div className="relative bg-white border-4 border-gradient rounded-3xl max-w-5xl w-full max-h-[90vh] flex flex-col md:flex-row overflow-hidden shadow-2xl">
+        <div className="relative glass-panel rounded-3xl max-w-5xl w-full max-h-[90vh] flex flex-col md:flex-row overflow-hidden shadow-2xl border border-white/10">
           {/* Image Section */}
-          <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6 relative overflow-y-auto">
+          <div className="flex-1 bg-slate-900/50 flex items-center justify-center p-6 relative overflow-y-auto">
                <div className="relative max-w-full max-h-full group w-full h-full flex items-center justify-center">
                   {isEditing && (
-                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10 rounded-lg">
-                           <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent mb-4"></div>
+                      <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+                           <div className="animate-spin rounded-full h-12 w-12 border-4 border-science-cyan border-t-transparent mb-4 shadow-lg shadow-science-cyan/50"></div>
                            <p className="text-white font-bold">{labels.applyingMagic} ✨</p>
                       </div>
                   )}
                   <img
                       src={currentImage}
                       alt={currentImageTitle}
-                      className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-lg border-2 border-gray-200"
+                      className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/10"
                   />
 
                   {/* Navigation Arrows for Sequences */}
@@ -167,7 +167,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                       {currentStepIndex > 0 && (
                         <button
                           onClick={handlePrevStep}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 glass-panel hover:bg-white/10 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg border border-white/10"
                           title="Previous Step"
                         >
                           <ChevronLeft className="w-5 h-5" />
@@ -176,7 +176,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
                       {currentStepIndex < item.steps.length - 1 && (
                         <button
                           onClick={handleNextStep}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 glass-panel hover:bg-white/10 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg border border-white/10"
                           title="Next Step"
                         >
                           <ChevronRight className="w-5 h-5" />
@@ -187,15 +187,15 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
 
                   {/* Step Indicator */}
                   {isSequence && item.steps && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 px-4 py-2 rounded-full shadow-lg border-2 border-cyan-300">
-                      <p className="text-xs font-bold text-gray-800">Step {currentStepIndex + 1} / {item.steps.length}</p>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur px-4 py-2 rounded-full shadow-lg border border-white/10">
+                      <p className="text-xs font-bold text-white">Step {currentStepIndex + 1} / {item.steps.length}</p>
                     </div>
                   )}
 
                   {/* Full Screen Toggle */}
                   <button
                     onClick={() => setIsFullScreen(true)}
-                    className="absolute top-4 right-4 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md"
+                    className="absolute top-4 right-4 p-3 glass-panel hover:bg-white/10 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg border border-white/10"
                     title={labels.btnFullScreen}
                   >
                     <Maximize className="w-5 h-5" />
@@ -204,49 +204,49 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
           </div>
 
           {/* Controls Section */}
-          <div className="w-full md:w-96 p-6 flex flex-col border-l-4 border-cyan-300 bg-gradient-to-b from-white to-cyan-50">
+          <div className="w-full md:w-96 p-6 flex flex-col border-l border-white/10 bg-slate-900/95 backdrop-blur-xl">
             <div className="flex justify-between items-center mb-6">
-               <h2 className="text-2xl font-bold text-gray-800">{labels.modalDetails}</h2>
-               <button onClick={onClose} className="p-2 hover:bg-cyan-100 rounded-full transition-colors">
-                 <X className="w-6 h-6 text-cyan-600" />
+               <h2 className="text-2xl font-display font-bold text-white">{labels.modalDetails}</h2>
+               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                 <X className="w-6 h-6 text-slate-400 hover:text-white" />
                </button>
             </div>
 
-            <div className="mb-6 space-y-4 overflow-y-auto flex-1">
+            <div className="mb-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
               <div>
-                  <h3 className="text-xs uppercase tracking-wider text-cyan-600 font-bold mb-1">{labels.modalDomain}</h3>
-                  <p className="text-gray-700 text-sm font-medium">{item.fact.domain}</p>
+                  <h3 className="text-xs uppercase tracking-wider text-science-cyan font-bold mb-1">{labels.modalDomain}</h3>
+                  <p className="text-slate-300 text-sm font-medium">{item.fact.domain}</p>
               </div>
               <div>
-                  <h3 className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-1">{labels.modalTitle}</h3>
-                  <p className="text-gray-800 text-lg font-bold">{item.fact.title}</p>
+                  <h3 className="text-xs uppercase tracking-wider text-science-blue font-bold mb-1">{labels.modalTitle}</h3>
+                  <p className="text-white text-lg font-bold">{item.fact.title}</p>
               </div>
 
               {/* Sequence Step Info */}
               {isSequence && currentStep && (
-                <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-3 rounded-lg border-2 border-blue-300">
-                  <h3 className="text-xs uppercase tracking-wider text-blue-700 font-bold mb-1">📍 {currentStep.title}</h3>
-                  <p className="text-gray-700 text-xs leading-relaxed">{currentStep.description}</p>
+                <div className="bg-science-blue/10 p-3 rounded-lg border border-science-blue/30">
+                  <h3 className="text-xs uppercase tracking-wider text-science-blue font-bold mb-1">📍 {currentStep.title}</h3>
+                  <p className="text-slate-300 text-xs leading-relaxed">{currentStep.description}</p>
                 </div>
               )}
 
               {/* Thumbnail Strip for Sequences */}
               {isSequence && item.steps && item.steps.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
+                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                   {item.steps.map((step, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentStepIndex(idx)}
-                      className={`flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all ${
+                      className={`flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all w-12 h-12 ${
                         idx === currentStepIndex
-                          ? 'border-cyan-500 scale-110'
-                          : 'border-gray-300 hover:border-cyan-400'
+                          ? 'border-science-cyan scale-110 shadow-lg shadow-science-cyan/20'
+                          : 'border-white/10 hover:border-white/30 opacity-60 hover:opacity-100'
                       }`}
                     >
                       <img
                         src={step.imageUrl}
                         alt={`Step ${idx + 1}`}
-                        className="w-12 h-12 object-cover"
+                        className="w-full h-full object-cover"
                       />
                     </button>
                   ))}
@@ -256,71 +256,71 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
               {/* Metadata Chips - Colorful */}
               <div className="flex flex-wrap gap-2 pt-2">
                   {item.audience && (
-                      <span className="px-3 py-1 bg-cyan-100 border border-cyan-400 rounded-full text-xs text-cyan-700 font-bold">
+                      <span className="px-3 py-1 bg-science-cyan/10 border border-science-cyan/30 rounded-full text-xs text-science-cyan font-bold">
                           👶 {item.audience}
                       </span>
                   )}
                   {item.style && (
-                      <span className="px-3 py-1 bg-blue-100 border border-blue-400 rounded-full text-xs text-blue-700 font-bold">
+                      <span className="px-3 py-1 bg-science-blue/10 border border-science-blue/30 rounded-full text-xs text-science-blue font-bold">
                           🎨 {item.style}
                       </span>
                   )}
                   {item.aspectRatio && (
-                      <span className="px-3 py-1 bg-cyan-100 border border-cyan-400 rounded-full text-xs text-cyan-700 font-bold">
+                      <span className="px-3 py-1 bg-science-teal/10 border border-science-teal/30 rounded-full text-xs text-science-teal font-bold">
                           📐 {item.aspectRatio}
                       </span>
                   )}
                   {item.modelName && (
-                      <span className="px-3 py-1 bg-yellow-100 border border-yellow-400 rounded-full text-xs text-yellow-700 font-bold">
+                      <span className="px-3 py-1 bg-science-purple/10 border border-science-purple/30 rounded-full text-xs text-science-purple font-bold">
                           ⚡ {item.modelName}
                       </span>
                   )}
                   {item.language && (
-                      <span className="px-3 py-1 bg-green-100 border border-green-400 rounded-full text-xs text-green-700 font-bold">
+                      <span className="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full text-xs text-green-400 font-bold">
                           🌍 {item.language.toUpperCase()}
                       </span>
                   )}
                   {isSequence && (
-                      <span className="px-3 py-1 bg-indigo-100 border border-indigo-400 rounded-full text-xs text-indigo-700 font-bold">
+                      <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-xs text-indigo-400 font-bold">
                           🔄 Sequence
                       </span>
                   )}
               </div>
 
               <div className="pt-2">
-                  <h3 className="text-xs uppercase tracking-wider text-blue-600 font-bold mb-2">{labels.modalFact}</h3>
-                  <p className="text-gray-700 text-sm leading-relaxed">{item.fact.text}</p>
+                  <h3 className="text-xs uppercase tracking-wider text-science-blue font-bold mb-2">{labels.modalFact}</h3>
+                  <p className="text-slate-300 text-sm leading-relaxed">{item.fact.text}</p>
               </div>
             </div>
 
-            <div className="mt-auto space-y-3 pt-4">
-               <div className="p-4 bg-white rounded-2xl border-2 border-cyan-300 shadow-md">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">✨ {labels.modalEditLabel}</label>
+            <div className="mt-auto space-y-3 pt-4 border-t border-white/10">
+               <div className="p-4 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
+                  <label className="block text-sm font-bold text-slate-300 mb-2">✨ {labels.modalEditLabel}</label>
                   <div className="flex gap-2">
                       <input
                           type="text"
                           value={editPrompt}
                           onChange={(e) => setEditPrompt(e.target.value)}
                           placeholder={labels.placeholderEdit}
-                          className="flex-1 bg-white border-2 border-cyan-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                          className="flex-1 bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-science-cyan focus:ring-1 focus:ring-science-cyan transition-all"
                           onKeyDown={(e) => e.key === 'Enter' && handleEdit()}
                       />
                       <button
                           onClick={handleEdit}
                           disabled={isEditing || !editPrompt.trim()}
-                          className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
+                          className="p-2 bg-gradient-to-r from-science-cyan to-science-blue text-white rounded-lg hover:shadow-lg hover:shadow-science-cyan/20 disabled:opacity-50 transition-all"
                           title="Apply Edit"
                       >
                           {isEditing ? <RefreshCcw className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
                       </button>
                   </div>
-                  {error && <p className="text-red-600 text-xs mt-2 font-medium">❌ {error}</p>}
+                  {error && <p className="text-red-400 text-xs mt-2 font-medium">❌ {error}</p>}
                </div>
 
               <button
                   onClick={handleDownload}
                   disabled={isDownloading}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 shadow-md"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-science-cyan to-science-blue text-white rounded-xl font-bold hover:shadow-lg hover:shadow-science-cyan/20 transition-all disabled:opacity-50 shadow-md"
               >
                    {isDownloading ? (
                       <>
@@ -341,10 +341,10 @@ export const ImageModal: React.FC<ImageModalProps> = ({ item, isOpen, onClose, o
 
       {/* Full Screen Overlay */}
       {isFullScreen && (
-        <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl flex items-center justify-center animate-in fade-in duration-200">
            <button
              onClick={() => setIsFullScreen(false)}
-             className="absolute top-6 right-6 p-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg text-white rounded-full transition-all z-50 shadow-lg"
+             className="absolute top-6 right-6 p-3 glass-panel hover:bg-white/10 text-white rounded-full transition-all z-50 shadow-lg border border-white/10"
              title={labels.exitFullScreen}
            >
              <Minimize className="w-6 h-6" />

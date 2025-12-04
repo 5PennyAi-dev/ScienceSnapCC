@@ -99,6 +99,7 @@ All generated infographics (single images and sequences) are stored in InstantDB
   - `currentSeed`: Fixed random seed (integer 0-999999) used for reproducible image generation across all steps
 - **UI State**: `appState` (tracks screens: input → selection → planning → generating → result → gallery)
 - **Gallery Filters**: `filterDomain`, `filterAudience`, `filterStyle`, `filterLanguage`, `gallerySearchQuery`
+- **Gallery Folders**: `selectedFolderId` (tracks currently selected folder, null for "All Items")
 - **Configuration State**: `language`, `audience`, `imageModel`, `aspectRatio`, `artStyle`
   - **Aspect Ratio Options**: 1:1 (Square), 3:4 (Portrait), 4:5 (Instagram), 4:3 (Landscape), 9:16 (Tall)
 - **Error State**: `error`, `isCheckingKey`, `hasApiKey`
@@ -171,6 +172,11 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
   - Shows process name + teaser description
   - Tailored to selected audience
   - Loading state while fetching
+- **FolderList.tsx**: Sidebar component for organizing gallery into folders
+  - Create/delete folders
+  - Drag-and-drop items into folders for organization
+  - Filter gallery by folder selection
+  - "All Items" view shows unfiltered gallery
 
 ### Configuration & Prompts
 
@@ -219,6 +225,12 @@ InstantDB schema stores infographics with:
 
 #### Metadata (Both)
 - `aspectRatio`, `style`, `audience`, `modelName`, `language`: Generation metadata
+- `folderId`: Optional folder ID for gallery organization
+
+#### Folders Collection
+- `id`: Unique folder identifier
+- `name`: User-defined folder name
+- `timestamp`: Creation timestamp
 
 ### Important Implementation Details
 

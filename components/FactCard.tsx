@@ -13,31 +13,31 @@ interface FactCardProps {
 }
 
 export const FactCard: React.FC<FactCardProps> = ({ fact, onSelect, index, labels }) => {
-  // Science-themed gradient backgrounds for each card
+  // Science-themed gradient backgrounds for each card - Updated for Dark Mode
   const themes = [
     {
-      bg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
-      badgeBg: 'bg-yellow-300',
-      badgeText: 'text-yellow-700',
-      buttonBg: 'hover:bg-cyan-700',
+      bg: 'bg-gradient-to-br from-science-blue/20 to-science-purple/20 hover:from-science-blue/30 hover:to-science-purple/30',
+      badgeBg: 'bg-science-blue/20',
+      badgeText: 'text-science-blue',
+      buttonBg: 'hover:bg-science-blue',
       icon: Atom,
-      borderColor: 'border-white'
+      borderColor: 'border-science-blue/30'
     },
     {
-      bg: 'bg-gradient-to-br from-teal-500 to-cyan-600',
-      badgeBg: 'bg-orange-300',
-      badgeText: 'text-orange-700',
-      buttonBg: 'hover:bg-teal-700',
+      bg: 'bg-gradient-to-br from-science-teal/20 to-science-cyan/20 hover:from-science-teal/30 hover:to-science-cyan/30',
+      badgeBg: 'bg-science-teal/20',
+      badgeText: 'text-science-teal',
+      buttonBg: 'hover:bg-science-teal',
       icon: Beaker,
-      borderColor: 'border-white'
+      borderColor: 'border-science-teal/30'
     },
     {
-      bg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-      badgeBg: 'bg-emerald-300',
-      badgeText: 'text-emerald-700',
-      buttonBg: 'hover:bg-blue-700',
+      bg: 'bg-gradient-to-br from-indigo-500/20 to-science-purple/20 hover:from-indigo-500/30 hover:to-science-purple/30',
+      badgeBg: 'bg-indigo-500/20',
+      badgeText: 'text-indigo-400',
+      buttonBg: 'hover:bg-indigo-500',
       icon: Microscope,
-      borderColor: 'border-white'
+      borderColor: 'border-indigo-500/30'
     },
   ];
 
@@ -46,40 +46,40 @@ export const FactCard: React.FC<FactCardProps> = ({ fact, onSelect, index, label
 
   return (
     <div
-      className={`${theme.bg} border-8 ${theme.borderColor} rounded-xl flex flex-col h-full transition-all duration-300 group relative overflow-hidden hover:scale-102 hover:-translate-y-2 shadow-2xl transform hover:shadow-3xl`}
+      className={`${theme.bg} glass-panel border ${theme.borderColor} rounded-2xl flex flex-col h-full transition-all duration-500 group relative overflow-hidden hover:scale-[1.02] hover:-translate-y-2 shadow-2xl hover:shadow-science-cyan/20`}
     >
       {/* Science Icon Watermark */}
-      <div className="absolute -top-8 -right-8 opacity-20 group-hover:opacity-30 transition-opacity">
+      <div className="absolute -top-8 -right-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
         <IconComponent className="w-40 h-40 text-white transform rotate-12" />
       </div>
 
       <div className="p-6 flex flex-col h-full relative z-10">
         {/* Header with badge and number */}
         <div className="flex justify-between items-center mb-4">
-          <span className={`${theme.badgeBg} ${theme.badgeText} text-xs font-bold uppercase tracking-wider flex items-center gap-2 px-3 py-1.5 rounded-full shadow-md`}>
-             <BookOpen className="w-3.5 h-3.5" />
+          <span className={`${theme.badgeBg} ${theme.badgeText} text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/5`}>
+             <BookOpen className="w-3 h-3" />
              {fact.domain}
           </span>
-          <span className="text-2xl font-black text-white/80">#{String(index + 1).padStart(2, '0')}</span>
+          <span className="text-2xl font-display font-bold text-white/20 group-hover:text-white/40 transition-colors">#{String(index + 1).padStart(2, '0')}</span>
         </div>
 
         {/* Title */}
-        <h3 className="text-2xl font-bold text-white mb-3 leading-tight group-hover:text-white/90 transition-all">
+        <h3 className="text-xl font-display font-bold text-white mb-3 leading-tight group-hover:text-science-cyan transition-colors">
           {fact.title}
         </h3>
 
         {/* Description */}
-        <p className="text-white/90 text-sm leading-relaxed mb-6 line-clamp-4 flex-grow font-medium">
+        <p className="text-slate-300 text-sm leading-relaxed mb-6 line-clamp-4 flex-grow font-medium group-hover:text-slate-200 transition-colors">
           {fact.text}
         </p>
 
         {/* Action Button */}
         <button
             onClick={() => onSelect(fact)}
-            className="w-full py-3 px-4 bg-white text-gray-800 rounded-xl text-sm font-bold transition-all flex items-center justify-between group-hover:shadow-lg hover:scale-105 active:scale-95 shadow-md"
+            className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-between group-hover:border-science-cyan/50 group-hover:shadow-lg hover:scale-[1.02] active:scale-95 backdrop-blur-sm"
         >
           <span>{labels.createBtn}</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-4 h-4 text-science-cyan transition-transform group-hover:translate-x-1" />
         </button>
       </div>
     </div>
