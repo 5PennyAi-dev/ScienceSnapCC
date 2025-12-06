@@ -25,7 +25,7 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('fr');
   const [audience, setAudience] = useState<Audience>('young');
   const [imageModel, setImageModel] = useState<ImageModelType>(IMAGE_MODEL_PRO);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.TALL);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.INSTAGRAM);
   const [artStyle, setArtStyle] = useState<ArtStyle>('DEFAULT');
   const [appState, setAppState] = useState<AppState>('dashboard');
   

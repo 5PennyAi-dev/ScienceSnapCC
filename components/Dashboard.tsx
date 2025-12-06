@@ -80,26 +80,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectMode }) => {
           </button>
         ))}
       </div>
-
-      {/* Quick Stats or Featured (Optional filler for dashboard) */}
-      <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Infographics Generated', value: '10k+', icon: Sparkles },
-          { label: 'Scientific Domains', value: '12', icon: Globe },
-          { label: 'Active Learners', value: '5k+', icon: Lightbulb },
-          { label: 'Avg. Generation Time', value: '< 30s', icon: Dna },
-        ].map((stat, i) => (
-          <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
-            <div className="p-2 rounded-lg bg-white/5">
-              <stat.icon className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-white">{stat.value}</div>
-              <div className="text-xs text-slate-500 uppercase tracking-wider">{stat.label}</div>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };

@@ -10,6 +10,21 @@ const getAiClient = () => {
 
 const getLanguageName = (lang: Language) => lang === 'fr' ? 'French' : 'English';
 
+// Helper to log prompts for debugging and analysis
+const logPrompt = (functionName: string, prompt: string, additionalInfo?: Record<string, any>) => {
+  console.log('\n' + '='.repeat(80));
+  console.log(`🤖 LLM PROMPT | ${functionName} | ${new Date().toISOString()}`);
+  console.log('='.repeat(80));
+  if (additionalInfo) {
+    console.log('📋 Context:', JSON.stringify(additionalInfo, null, 2));
+    console.log('-'.repeat(80));
+  }
+  console.log('📝 PROMPT:');
+  console.log(prompt);
+  console.log('='.repeat(80) + '\n');
+};
+
+
 const AUDIENCE_CONFIG = {
   young: {
     target: "young audiences (8-10 years old)",
@@ -121,6 +136,9 @@ export const generateScientificFacts = async (domain: string, lang: Language, au
   // Facts generation doesn't strictly need Visual Style, so we pass DEFAULT
   prompt = injectContext(prompt, audience, 'DEFAULT');
 
+  // Log the complete prompt
+  logPrompt('generateScientificFacts', prompt, { domain, language: getLanguageName(lang), audience });
+
   try {
     const response = await retryWithBackoff(() => ai.models.generateContent({
       model: TEXT_MODEL,
@@ -165,6 +183,9 @@ export const generateFactFromConcept = async (concept: string, lang: Language, a
     .replace('{{LANGUAGE}}', () => getLanguageName(lang));
     
   prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  // Log the complete prompt
+  logPrompt('generateFactFromConcept', prompt, { concept, language: getLanguageName(lang), audience });
 
   try {
     const response = await retryWithBackoff(() => ai.models.generateContent({
@@ -215,6 +236,9 @@ export const generateConceptSuggestions = async (
 
   prompt = injectContext(prompt, audience, 'DEFAULT');
 
+  // Log the complete prompt
+  logPrompt('generateConceptSuggestions', prompt, { language: getLanguageName(lang), audience });
+
   try {
     const response = await retryWithBackoff(() => ai.models.generateContent({
       model: TEXT_MODEL,
@@ -261,6 +285,9 @@ export const generateProcessSuggestions = async (
     .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
 
   prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  // Log the complete prompt
+  logPrompt('generateProcessSuggestions', prompt, { language: getLanguageName(lang), audience });
 
   try {
     const response = await retryWithBackoff(() => ai.models.generateContent({
@@ -310,6 +337,16 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
   if (researchContext) {
     prompt += `\n\n**RESEARCH CONTEXT (Use this to enhance accuracy and visual design):**\n${researchContext}`;
   }
+
+  // Log the complete prompt
+  logPrompt('generateInfographicPlan', prompt, { 
+    factTitle: fact.title, 
+    domain: fact.domain,
+    language: getLanguageName(lang), 
+    audience,
+    style,
+    hasResearchContext: !!researchContext 
+  });
 
   try {
     console.log(`[Plan Generation] Starting with fact: "${fact.title}"`);
@@ -378,11 +415,11 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
     educationalTextGuidance = `
 
 **CRITICAL EDUCATIONAL TEXT REQUIREMENTS (For Young Learners 8-10 years old):**
-This is an educational infographic designed specifically for children. The image MUST include extensive readable text:
-1. STEP BADGE: Clearly display the step number (e.g., "STEP 2/5") - large, visible, typically top-right
+This is an educational infographic designed specifically for children. The image MUST include readable text:
+1. STEP BADGE: Clearly display the step number (e.g., \"STEP 2/5\") - large, visible, typically top-right
 2. TITLE: Make the step title prominent and readable
-3. LABELS (3-5): Clear, readable labels identifying key objects, areas, or components in the scene
-4. EXPLANATIONS (4-5 sentences): Complete sentences (8-12 words each) explaining what's happening, written in simple kid-friendly language
+3. LABELS (1-3): Clear, readable labels identifying key objects, areas, or components in the scene
+4. EXPLANATIONS (2-3 sentences): Complete sentences (8-12 words each) explaining what's happening, written in simple kid-friendly language
 5. ANNOTATIONS: Text callouts with arrows pointing to important events or transformations
 6. TEXT HIERARCHY: Title (largest) → Explanations (medium, readable from 1 meter away) → Labels (smaller)
 - All text must be clearly visible using a bold, friendly, rounded font suitable for children
@@ -406,6 +443,16 @@ This image is part of a multi-step sequence. Every step must look like it was cr
 
   // Explicit instruction to ensure the model behaves as an image generator
   const prompt = `Generate a high-quality educational infographic image based on the following detailed plan:${styleInstruction}${educationalTextGuidance}\n\n${plan}`;
+
+  // Log the complete prompt
+  logPrompt('generateInfographicImage', prompt, { 
+    model, 
+    aspectRatio, 
+    style, 
+    timeoutMs,
+    seed,
+    planLength: plan.length 
+  });
 
   try {
     console.log(`[Image Generation] Starting with model: ${model}, aspect ratio: ${aspectRatio}, style: ${style}, timeout: ${timeoutMs}ms`);
@@ -563,6 +610,9 @@ export const generateProcessStructure = async (
 
   prompt = injectContext(prompt, audience, 'DEFAULT');
 
+  // Log the complete prompt
+  logPrompt('generateProcessStructure', prompt, { processName, language: getLanguageName(lang), audience });
+
   try {
     const response = await withTimeout(
       retryWithBackoff(() => ai.models.generateContent({
@@ -615,6 +665,9 @@ export const generateVisualStyleDNA = async (
     .replace(/{{LANGUAGE}}/g, () => getLanguageName(language));
 
   prompt = injectContext(prompt, audience, style);
+
+  // Log the complete prompt
+  logPrompt('generateVisualStyleDNA', prompt, { processName, domain, totalSteps, language: getLanguageName(language), audience, style });
 
   try {
     console.log('[Style DNA] Generating visual style specification...');
@@ -694,6 +747,9 @@ export const generateStepExplanation = async (
     .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
 
   prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  // Log the complete prompt
+  logPrompt('generateStepExplanation', prompt, { processName, stepNumber, totalSteps, stepTitle, language: getLanguageName(lang), audience });
 
   try {
     const response = await withTimeout(
@@ -895,6 +951,20 @@ export const generateStepInfographicPlan = async (
   } else {
     console.log('[Step Plan] No research data provided');
   }
+
+  // Log the complete prompt
+  logPrompt('generateStepInfographicPlan', prompt, { 
+    processName, 
+    stepNumber, 
+    totalSteps, 
+    stepTitle,
+    domain,
+    language: getLanguageName(lang), 
+    audience,
+    style,
+    hasStyleDNA: !!styleDNA,
+    hasResearchContext: !!(processResearch && !processResearch.error)
+  });
 
   try {
     const response = await withTimeout(

@@ -12,7 +12,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, appState, setAppState 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const navItems = [
-    { id: 'input', label: 'Create', icon: Home },
+    { id: 'dashboard', label: 'Create', icon: Home },
     { id: 'gallery', label: 'Gallery', icon: Grid3X3 },
     // Settings is usually a modal or separate view, but for now we can keep it here or just show it as a button
   ];
@@ -44,7 +44,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, appState, setAppState 
 
         <nav className="flex-1 px-4 space-y-2">
           {navItems.map((item) => {
-            const isActive = appState === item.id || (item.id === 'input' && ['selection', 'planning', 'generating', 'result'].includes(appState));
+            const isActive = appState === item.id;
             const Icon = item.icon;
             
             return (

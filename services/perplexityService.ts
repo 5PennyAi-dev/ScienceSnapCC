@@ -103,6 +103,21 @@ const getLanguageName = (language: Language): string => {
   return language === 'fr' ? 'French' : 'English';
 };
 
+// Helper to log prompts for debugging and analysis
+const logPrompt = (functionName: string, prompt: string, additionalInfo?: Record<string, any>) => {
+  console.log('\n' + '='.repeat(80));
+  console.log(`🔍 PERPLEXITY PROMPT | ${functionName} | ${new Date().toISOString()}`);
+  console.log('='.repeat(80));
+  if (additionalInfo) {
+    console.log('📋 Context:', JSON.stringify(additionalInfo, null, 2));
+    console.log('-'.repeat(80));
+  }
+  console.log('📝 PROMPT:');
+  console.log(prompt);
+  console.log('='.repeat(80) + '\n');
+};
+
+
 // Build research prompt - requests structured educational research
 const buildResearchPrompt = (
   processName: string,
@@ -163,6 +178,10 @@ export const researchProcessForEducation = async (
     console.log(`[Perplexity Research] Starting research for: "${processName}" (audience: ${audience}, language: ${languageName})`);
     const startTime = Date.now();
 
+    // Build and log the research prompt
+    const researchPrompt = buildResearchPrompt(processName, audienceDesc, languageName);
+    logPrompt('researchProcessForEducation', researchPrompt, { processName, audience, language: languageName });
+
     // Call Perplexity API with 30-second timeout
     const response = await withTimeout(
       retryWithBackoff(() =>
@@ -173,7 +192,7 @@ export const researchProcessForEducation = async (
           },
           {
             role: 'user',
-            content: buildResearchPrompt(processName, audienceDesc, languageName)
+            content: researchPrompt
           }
         ])
       ),
@@ -312,6 +331,10 @@ export const researchFactForInfographic = async (
     console.log(`[Perplexity Fact Research] Starting research for: "${factTitle}" (audience: ${audience}, language: ${languageName})`);
     const startTime = Date.now();
 
+    // Build and log the research prompt
+    const researchPrompt = buildFactResearchPrompt(factTitle, factText, domain, audienceDesc, languageName);
+    logPrompt('researchFactForInfographic', researchPrompt, { factTitle, domain, audience, language: languageName });
+
     // Call Perplexity API with 30-second timeout
     const response = await withTimeout(
       retryWithBackoff(() =>
@@ -322,7 +345,7 @@ export const researchFactForInfographic = async (
           },
           {
             role: 'user',
-            content: buildFactResearchPrompt(factTitle, factText, domain, audienceDesc, languageName)
+            content: researchPrompt
           }
         ])
       ),

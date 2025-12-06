@@ -50,7 +50,7 @@ Identify 3 true and fascinating concepts or phenomena in the specified field.
 For each fact, provide:
 - The scientific domain
 - An appropriate title (2 or 3 words)
-- A 250 words short text summarizing the essence of the fact
+- A 100 words short text summarizing the essence of the fact
 
 The fact and its associated text must be:
 - Informative and factual
@@ -275,10 +275,10 @@ Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}}: "{{PR
 **2. Text & Educational Content (for 8-10 year olds):**
 - **STEP TITLE**: Display using the titleStyle specifications from Style DNA
 - **STEP BADGE**: "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" using the badgeStyle specifications from Style DNA
-- 3-5 labels identifying key objects/areas
-- 4-5 explanatory sentences (8-12 words each, simple language)
+- 1-3 labels identifying key objects/areas
+- 2-3 explanatory sentences (8-12 words each, simple language)
 - Annotations with arrows for important elements
-- 2-3 callout boxes for key events
+- 0-1 callout boxes for key events
 
 **3. Step-Specific Content:**
 - Show transformation/change in THIS step only
