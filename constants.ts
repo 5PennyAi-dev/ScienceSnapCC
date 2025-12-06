@@ -508,3 +508,28 @@ These infographics will be viewed in sequence, so each image should feel like pa
 
 **IMPORTANT: The Plan must be written in {{LANGUAGE}}. All text elements to be displayed on the infographic MUST be in {{LANGUAGE}}.**
 `;
+
+export const QUIZ_GENERATION_PROMPT = `
+#Role
+You are a science educator creating an interactive quiz for {{TARGET_AUDIENCE}}.
+
+#Task
+Generate a 5-question multiple-choice quiz based on the following scientific facts:
+{{FACTS}}
+
+#Output Format
+Return a JSON object with:
+- "title": A catchy title for the quiz (e.g., "Space Explorer Challenge")
+- "questions": An array of 5 objects, each containing:
+  - "id": A unique string ID (e.g., "q1")
+  - "question": The question text
+  - "options": An array of 4 possible answers
+  - "correctAnswerIndex": The index (0-3) of the correct answer
+  - "explanation": A brief sentence explaining WHY the answer is correct (shown after they guess)
+
+#Requirements
+- Questions should be fun and engaging for {{TARGET_AUDIENCE}}
+- Use a {{TONE}} tone
+- Ensure strictly ONE correct answer per question
+- **IMPORTANT: All output (questions, answers, explanations) must be in {{LANGUAGE}}**
+`;

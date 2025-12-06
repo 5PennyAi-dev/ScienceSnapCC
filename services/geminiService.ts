@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle, PerplexityResearchData, VisualStyleDNA } from "../types";
-import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, VISUAL_STYLE_DNA_GENERATOR_PROMPT, STYLE_CONFIG } from "../constants";
+import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle, PerplexityResearchData, VisualStyleDNA, QuizQuestion } from "../types";
+import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, VISUAL_STYLE_DNA_GENERATOR_PROMPT, STYLE_CONFIG, QUIZ_GENERATION_PROMPT } from "../constants";
 
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
@@ -979,6 +979,73 @@ export const generateStepInfographicPlan = async (
     return response.text;
   } catch (error) {
     console.error("Error generating step plan:", error);
+    throw error;
+  }
+};
+
+export interface QuizData {
+  title: string;
+  questions: QuizQuestion[];
+}
+
+export const generateQuizFromFacts = async (
+  facts: ScientificFact[],
+  lang: Language,
+  audience: Audience
+): Promise<QuizData> => {
+  const ai = getAiClient();
+  
+  const factsText = facts.map(f => `- ${f.title}: ${f.text}`).join('\n');
+  
+  let prompt = QUIZ_GENERATION_PROMPT
+    .replace('{{FACTS}}', () => factsText)
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, 'DEFAULT');
+
+  logPrompt('generateQuizFromFacts', prompt, { factCount: facts.length, language: getLanguageName(lang), audience });
+
+  try {
+    const response = await retryWithBackoff(() => ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            questions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  question: { type: Type.STRING },
+                  options: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                  },
+                  correctAnswerIndex: { type: Type.INTEGER },
+                  explanation: { type: Type.STRING }
+                },
+                required: ["id", "question", "options", "correctAnswerIndex", "explanation"]
+              }
+            }
+          },
+          required: ["title", "questions"]
+        }
+      }
+    }));
+
+    const text = response.text;
+    if (!text) {
+      throw new Error("No quiz returned from Gemini");
+    }
+
+    return JSON.parse(text) as QuizData;
+  } catch (error) {
+    console.error("Error generating quiz:", error);
     throw error;
   }
 };

@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData, PerplexityResearchData, Folder } from './types';
-import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, generateVisualStyleDNA, ConceptSuggestion, ProcessSuggestion } from './services/geminiService';
+import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, generateVisualStyleDNA, generateQuizFromFacts, ConceptSuggestion, ProcessSuggestion, QuizData } from './services/geminiService';
 import { researchFactForInfographic, researchProcessForEducation } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
 import { GalleryGrid } from './components/GalleryGrid';
 import { ImageModal } from './components/ImageModal';
+import { QuizModal } from './components/QuizModal';
 import { StyleSelector } from './components/StyleSelector';
 import { FilterPill } from './components/FilterPill';
 import { DomainSelector } from './components/DomainSelector';
@@ -82,6 +83,8 @@ const App: React.FC = () => {
   // Modal State
   const [selectedGalleryItem, setSelectedGalleryItem] = useState<InfographicItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [currentQuizItem, setCurrentQuizItem] = useState<InfographicItem | null>(null);
 
   // API Key State
   const [hasApiKey, setHasApiKey] = useState(false);
@@ -701,6 +704,78 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCreateQuiz = async (folderId: string) => {
+    setLoading(true);
+    setLoadingMessage("Generating quiz from folder items...");
+    try {
+        // Get all items in the folder with facts
+        const folderItems = gallery.filter(item => item.folderId === folderId && item.fact);
+        if (folderItems.length === 0) {
+            throw new Error("Folder is empty or contains no facts to quiz on.");
+        }
+
+        const facts = folderItems.flatMap(item => {
+            // For sequences, use the content of the steps as facts
+            if (item.isSequence && item.steps && item.steps.length > 0) {
+                return item.steps.map(step => ({
+                    domain: item.fact.domain,
+                    title: `${item.fact.title} - Step ${step.stepNumber}: ${step.title}`,
+                    text: step.description
+                }));
+            }
+            // For single items, use the main fact
+            return [item.fact];
+        });
+
+        // Generate Quiz
+        const quizData = await generateQuizFromFacts(facts, language, audience);
+
+        // Generate Cover Art (Quickly, using a simple plan)
+        setLoadingMessage("Designing quiz cover art...");
+        const coverPlan = `Create a fun, vibrant quiz cover image for a science quiz titled "${quizData.title}". Style: ${artStyle}. Audience: ${audience}.`;
+        const coverImage = await generateInfographicImage(coverPlan, IMAGE_MODEL_FLASH, AspectRatio.SQUARE, artStyle);
+        const uploadedCoverUrl = await uploadImageToStorage(coverImage, `quiz-cover-${Date.now()}.png`);
+
+        // Save Quiz Item
+        const newItemId = id();
+        const quizItemData = {
+            id: newItemId,
+            timestamp: Date.now(),
+            folderId: folderId,
+            isQuiz: true,
+            quizData: JSON.stringify(quizData),
+            imageUrl: uploadedCoverUrl,
+            // Metadata
+            aspectRatio: AspectRatio.SQUARE,
+            style: artStyle,
+            audience: audience,
+            modelName: imageModel, // Should default to flash for speed if not set
+            language: language,
+            // BACKUP: Save quizData string to 'plan' field to ensure persistence
+            plan: JSON.stringify(quizData), 
+            // Dummy fact data for compatibility with InfographicItem type
+            fact: {
+                domain: "Quiz",
+                title: quizData.title,
+                text: `Interactive quiz: ${quizData.title}`
+            },
+            title: quizData.title, // Add title at top level for easy access
+            domain: "Quiz",
+            text: `Interactive quiz: ${quizData.title}` 
+        };
+
+        console.log('SAVING QUIZ ITEM:', quizItemData);
+        await db.transact(db.tx.infographics[newItemId].update(quizItemData));
+        setAppState('gallery'); // Ensure we stay in gallery view to see the new item
+
+    } catch (e: any) {
+        console.error("Quiz creation failed:", e);
+        setError(e.message);
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const handleCreateFolder = async (name: string) => {
     const newFolderId = id();
     await db.transact(db.tx.folders[newFolderId].update({
@@ -732,9 +807,52 @@ const App: React.FC = () => {
     setDraggedItemId(null);
   };
 
+  const handleDeleteItem = async (itemId: string) => {
+    if (confirm("Are you sure you want to delete this item? This cannot be undone.")) {
+        await db.transact(db.tx.infographics[itemId].delete());
+    }
+  };
+
+  const handleRemoveFromFolder = async (itemId: string) => {
+    // To remove from folder, we just update folderId to null (or delete the field if InstantDB supports it, but update to null is safer fallback)
+    await db.transact(db.tx.infographics[itemId].update({ folderId: null }));
+  };
+
   const handleGalleryClick = (item: InfographicItem) => {
-    setSelectedGalleryItem(item);
-    setIsModalOpen(true);
+    console.log('Gallery Item Clicked:', item);
+    // Use fallback check for domain 'Quiz' in case isQuiz boolean is lost
+    if (item.isQuiz || item.fact?.domain === 'Quiz' || (item as any).domain === 'Quiz') {
+        console.log('Opening Quiz Modal');
+
+        // Parse quizData if it's a string (backwards compatibility or fix for DB issue)
+        let parsedItem = { ...item };
+        
+        let rawQuizData = item.quizData;
+        // Fallback to plan field if quizData is missing
+        if (!rawQuizData && item.plan && (item.isQuiz || item.fact?.domain === 'Quiz')) {
+            console.log('Recovering Quiz Data from PLAN field');
+            rawQuizData = item.plan;
+        }
+
+        console.log('Raw Quiz Data found:', rawQuizData ? 'YES' : 'NO');
+
+        if (typeof rawQuizData === 'string') {
+            try {
+                parsedItem.quizData = JSON.parse(rawQuizData);
+            } catch (e) {
+                console.error("Failed to parse quizData:", e);
+            }
+        } else if (rawQuizData) {
+             // It's already an object (if DB works as expected)
+             parsedItem.quizData = rawQuizData as any;
+        }
+        
+        setCurrentQuizItem(parsedItem);
+        setIsQuizModalOpen(true);
+    } else {
+        setSelectedGalleryItem(item);
+        setIsModalOpen(true);
+    }
   };
 
   // Renders
@@ -1247,6 +1365,7 @@ const App: React.FC = () => {
                             onCreateFolder={handleCreateFolder}
                             onDeleteFolder={handleDeleteFolder}
                             onDropItem={handleDropItem}
+                            onCreateQuiz={handleCreateQuiz}
                             draggedItemId={draggedItemId}
                         />
                     </div>
@@ -1319,6 +1438,8 @@ const App: React.FC = () => {
                                 emptyMessage={t.galleryEmpty}
                                 onDragStart={handleDragStart}
                                 onDragEnd={handleDragEnd}
+                                onDeleteItem={handleDeleteItem}
+                                onRemoveFromFolder={selectedFolderId ? handleRemoveFromFolder : undefined}
                             />
                             
                             {/* Pagination Controls */}
@@ -1379,6 +1500,13 @@ const App: React.FC = () => {
         )}
 
 
+
+      <QuizModal 
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        title={currentQuizItem?.quizData?.title || "Quiz"}
+        questions={currentQuizItem?.quizData?.questions || []}
+      />
 
       <ImageModal 
         item={selectedGalleryItem}

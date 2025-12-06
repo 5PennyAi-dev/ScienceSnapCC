@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { InfographicItem } from '../types';
-import { Rocket } from 'lucide-react';
+import { Rocket, Gamepad2, Trash2, FolderMinus } from 'lucide-react';
 
 interface GalleryGridProps {
   items: InfographicItem[];
@@ -8,9 +8,11 @@ interface GalleryGridProps {
   emptyMessage: string;
   onDragStart?: (itemId: string) => void;
   onDragEnd?: () => void;
+  onDeleteItem?: (itemId: string) => void;
+  onRemoveFromFolder?: (itemId: string) => void;
 }
 
-export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, emptyMessage, onDragStart, onDragEnd }) => {
+export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, emptyMessage, onDragStart, onDragEnd, onDeleteItem, onRemoveFromFolder }) => {
   const draggedItemRef = useRef<string | null>(null);
 
   if (items.length === 0) {
@@ -33,9 +35,10 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, em
         return (
           <div
             key={item.id}
-            className="group cursor-move flex flex-col gap-3 p-3 glass-card rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden border border-white/5 hover:border-science-cyan/30"
+            className="group relative cursor-move flex flex-col gap-3 p-3 glass-card rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden border border-white/5 hover:border-science-cyan/30"
             onClick={(e) => {
               // Only trigger click if we're not dragging
+              console.log('Clicked item:', item.id, 'IsQuiz:', item.isQuiz);
               if (!draggedItemRef.current) {
                 onItemClick(item);
               }
@@ -87,6 +90,32 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, em
                 {/* Hover Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
+            ) : (item.isQuiz || item.fact?.domain === 'Quiz') ? (
+              // Quiz Card
+              <div className="relative aspect-[3/4] rounded-xl bg-violet-900 overflow-hidden border border-white/10 shadow-inner group-hover:shadow-violet-500/40 transition-all pointer-events-none">
+                {/* Use the quiz cover art if available (reusing imageUrl logic) */}
+                {item.imageUrl && (
+                    <img 
+                        src={item.imageUrl} 
+                        alt="Quiz Cover" 
+                        className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+                    />
+                )}
+                
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                  <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-3 shadow-lg border border-white/20 group-hover:scale-110 transition-transform duration-300">
+                    <Gamepad2 className="w-8 h-8 text-white drop-shadow-md" />
+                  </div>
+                  <h3 className="text-white font-black text-lg leading-tight drop-shadow-lg uppercase tracking-tight">
+                    Interactive Quiz
+                  </h3>
+                  <div className="mt-2 bg-violet-600/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/10">
+                    {item.quizData?.questions.length || 5} Questions
+                  </div>
+                </div>
+                 {/* Hover Overlay */}
+                 <div className="absolute inset-0 bg-gradient-to-t from-violet-900/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
             ) : (
               // Single Image
               <div className="relative aspect-[3/4] rounded-xl bg-slate-900 overflow-hidden border border-white/10 shadow-inner group-hover:shadow-science-cyan/20 transition-all pointer-events-none">
@@ -101,6 +130,34 @@ export const GalleryGrid: React.FC<GalleryGridProps> = ({ items, onItemClick, em
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             )}
+
+            {/* Action Buttons (Delete / Remove from Folder) - Visible on Hover */}
+            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                {onRemoveFromFolder && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveFromFolder(item.id);
+                        }}
+                        className="p-1.5 bg-slate-800/80 backdrop-blur rounded-full text-slate-300 hover:text-white hover:bg-slate-700/80 border border-white/10 transition-colors"
+                        title="Remove from Folder"
+                    >
+                        <FolderMinus className="w-4 h-4" />
+                    </button>
+                )}
+                {onDeleteItem && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteItem(item.id);
+                        }}
+                        className="p-1.5 bg-red-900/80 backdrop-blur rounded-full text-red-100 hover:bg-red-800/80 border border-red-500/30 transition-colors"
+                        title="Delete Item"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
+            </div>
 
             {/* Info Section */}
             <div className="px-1 pb-1 pointer-events-none">

@@ -37,9 +37,24 @@ export interface InfographicItem {
   modelName?: string;
   language?: Language;
   folderId?: string;
+
+  // Quiz Data (Optional)
+  isQuiz?: boolean;
+  quizData?: string | {
+    title: string;
+    questions: QuizQuestion[];
+  };
 }
 
-export type AppState = 'dashboard' | 'input' | 'selection' | 'planning' | 'generating' | 'result' | 'gallery';
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+}
+
+export type AppState = 'dashboard' | 'input' | 'selection' | 'planning' | 'generating' | 'result' | 'gallery' | 'quiz';
 
 export type SearchMode = 'domain' | 'concept' | 'process';
 

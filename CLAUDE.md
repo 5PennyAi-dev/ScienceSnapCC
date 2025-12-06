@@ -408,6 +408,36 @@ Both research functions handle Perplexity API responses that may be wrapped in m
 - Extracts JSON from ```json...``` code blocks if present
 - Falls back to finding first `{` and last `}` for malformed responses
 - Gracefully degradates to empty data on parse failure
+ 
+ ## Quiz Feature with Interactive Mode
+ 
+ An interactive feature allowing users to test their knowledge based on generated infographics.
+ 
+ ### Overview
+ - **Creation**: Users create quizzes from any Folder in the gallery.
+ - **Generation**:
+   - Analyzes all infographics within the folder.
+   - For **Sequence Infographics**, it "unrolls" the sequence, treating each step as a distinct fact source.
+   - Uses `gemini-2.5-flash` to generate 5-10 questions (Multiple Choice) based on the folder content.
+   - Generates a custom "Quiz Cover Art" using `gemini-2.5-flash-image` (Square aspect ratio).
+ - **Storage**: Saved as a special `InfographicItem` with `isQuiz: true`.
+   - **Data Persistence**: Uses a dual-save strategy. Quiz data is stored in the new `quizData` field *and* stringified into the `plan` field to ensure robust persistence across database schema limitations.
+ - **Gameplay**:
+   - Launch via the `QuizModal` by clicking key items in the gallery.
+   - Interactive UI with immediate feedback (Correct/Incorrect), score tracking, and celebratory confetti.
+   - "Did you know?" explanations revealed after each answer.
+ 
+ ### Technical Implementation
+ - **Generation Logic**: `generateQuizFromFacts` in `geminiService.ts`.
+ - **UI Components**:
+   - `QuizModal.tsx`: The game interface.
+   - `FolderList.tsx`: Hosts the "Create Quiz" button.
+   - `GalleryGrid.tsx`: Renders Quiz Cards with specific styling and Gamepad icon.
+ - **Gallery Management**:
+   - Users can now **Delete** items permanently (Trash icon).
+   - Users can **Remove** items from specific folders (FolderMinus icon).
+ 
+
 
 ## Key Files Reference
 
