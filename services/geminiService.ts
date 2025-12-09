@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScientificFact, Language, Audience, ImageModelType, AspectRatio, ArtStyle, PerplexityResearchData, VisualStyleDNA, QuizQuestion } from "../types";
-import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, VISUAL_STYLE_DNA_GENERATOR_PROMPT, STYLE_CONFIG, QUIZ_GENERATION_PROMPT } from "../constants";
+import { TEXT_MODEL, IMAGE_MODEL_FLASH, IMAGE_MODEL_PRO, FACT_GENERATION_PROMPT, INFOGRAPHIC_PLAN_PROMPT, CONCEPT_EXPLANATION_PROMPT, PROCESS_DISCOVERY_PROMPT, PROCESS_STEP_EXPLANATION_PROMPT, PROCESS_STEP_PLAN_PROMPT, CONCEPT_SUGGESTIONS_PROMPT, PROCESS_SUGGESTIONS_PROMPT, VISUAL_STYLE_DNA_GENERATOR_PROMPT, STYLE_CONFIG, QUIZ_GENERATION_PROMPT, VISUAL_WORKSHEET_PROMPT } from "../constants";
 
 const getAiClient = () => {
   const apiKey = process.env.API_KEY;
@@ -357,7 +357,7 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
         model: TEXT_MODEL,
         contents: prompt,
       })),
-      60000,
+      120000,
       "Plan generation"
     );
 
@@ -383,7 +383,7 @@ export const generateInfographicPlan = async (fact: ScientificFact, lang: Langua
   }
 };
 
-export const generateInfographicImage = async (plan: string, model: ImageModelType, aspectRatio: AspectRatio, style: ArtStyle, timeoutMs: number = 60000, seed?: number): Promise<string> => {
+export const generateInfographicImage = async (plan: string, model: ImageModelType, aspectRatio: AspectRatio, style: ArtStyle, timeoutMs: number = 120000, seed?: number): Promise<string> => {
   const ai = getAiClient();
 
   const config: any = {
@@ -408,7 +408,7 @@ export const generateInfographicImage = async (plan: string, model: ImageModelTy
   }
 
   // For process sequences, add enhanced guidance for educational text and consistency
-  const isProcessSequence = timeoutMs > 60000; // Process sequences use 120s timeout
+  const isProcessSequence = timeoutMs >= 120000; // Process sequences use longer timeout
 
   let educationalTextGuidance = "";
   if (isProcessSequence) {
@@ -562,7 +562,7 @@ export const editInfographic = async (imageInput: string, instruction: string, m
         },
         config: config
       })),
-      60000,
+      120000,
       "Image editing"
     );
 
@@ -636,7 +636,7 @@ export const generateProcessStructure = async (
           }
         }
       })),
-      60000,
+      120000,
       "Process structure generation"
     );
 
@@ -709,7 +709,7 @@ export const generateVisualStyleDNA = async (
           }
         }
       })),
-      60000,
+      120000,
       "Style DNA generation"
     );
 
@@ -773,7 +773,7 @@ export const generateStepExplanation = async (
           }
         }
       })),
-      60000,
+      120000,
       "Step explanation generation"
     );
 
@@ -1046,6 +1046,62 @@ export const generateQuizFromFacts = async (
     return JSON.parse(text) as QuizData;
   } catch (error) {
     console.error("Error generating quiz:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generates a detailed image prompt for a Visual Worksheet (static quiz poster).
+ * This prompt is then used with generateInfographicImage to create the actual image.
+ */
+export const generateVisualQuizPrompt = async (
+  facts: ScientificFact[],
+  lang: Language,
+  audience: Audience,
+  style: ArtStyle
+): Promise<string> => {
+  const ai = getAiClient();
+  
+  // Format facts for the prompt
+  const factsText = facts.map(f => `- ${f.title}: ${f.text}`).join('\n');
+  
+  let prompt = VISUAL_WORKSHEET_PROMPT
+    .replace('{{FACTS}}', () => factsText)
+    .replace(/{{LANGUAGE}}/g, () => getLanguageName(lang));
+
+  prompt = injectContext(prompt, audience, style);
+
+  logPrompt('generateVisualQuizPrompt', prompt, { 
+    factCount: facts.length, 
+    language: getLanguageName(lang), 
+    audience,
+    style 
+  });
+
+  try {
+    console.log(`[Visual Quiz] Generating image prompt for ${facts.length} facts...`);
+    const startTime = Date.now();
+
+    const response = await withTimeout(
+      retryWithBackoff(() => ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: prompt
+      })),
+      60000,
+      "Visual worksheet prompt generation"
+    );
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[Visual Quiz] Prompt generated in ${elapsed}ms`);
+
+    const text = response.text;
+    if (!text) {
+      throw new Error("No visual quiz prompt returned from Gemini");
+    }
+
+    return text;
+  } catch (error) {
+    console.error("Error generating visual quiz prompt:", error);
     throw error;
   }
 };

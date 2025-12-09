@@ -272,13 +272,23 @@ Create a detailed visual plan for Step {{STEP_NUMBER}} of {{TOTAL_STEPS}}: "{{PR
 - Follow the layout template precisely
 - Match the art style and typography specifications exactly
 
-**2. Text & Educational Content (for 8-10 year olds):**
+**2. RICH EDUCATIONAL TEXT CONTENT (CRITICAL - Must be informative and engaging):**
 - **STEP TITLE**: Display using the titleStyle specifications from Style DNA
 - **STEP BADGE**: "STEP {{STEP_NUMBER}}/{{TOTAL_STEPS}}" using the badgeStyle specifications from Style DNA
-- 1-3 labels identifying key objects/areas
-- 2-3 explanatory sentences (8-12 words each, simple language)
-- Annotations with arrows for important elements
-- 0-1 callout boxes for key events
+- **ENGAGING SPEECH BUBBLE/CALLOUT**: Include a prominent speech bubble or callout with:
+  * An exciting hook or fun comparison (e.g., "Imagine if YOU could...", "C'est comme si...")
+  * A surprising fact with numbers or comparisons when applicable
+  * Make the child feel connected to the concept through relatable analogies
+- **3-5 LABELED COMPONENTS**: Each key concept/object must have:
+  * A clear title/name for the component
+  * A 1-2 sentence explanation of what it is or does
+  * Use simple, engaging language appropriate for 8-10 year olds
+- **DETAILED EXPLANATIONS**: For each major element, provide:
+  * What it is (identification)
+  * What it does (function)
+  * Why it matters (significance)
+- **CONCLUDING TAKEAWAY**: A final message box with an inspiring or memorable lesson from this step
+- All text must be large enough for 8-10 year olds to read easily
 
 **3. Step-Specific Content:**
 - Show transformation/change in THIS step only
@@ -381,12 +391,23 @@ Following these guidelines:
      * Position it consistently (e.g., top-right corner, 20px from edges)
      * Size it to be prominent but not overwhelming
      * This design MUST remain EXACTLY THE SAME across all steps in the sequence - only the number changes!
-   - Add 2-4 TEXT LABELS that identify key components, objects, or areas in the scene
-   - Include 3-4 SHORT EXPLANATORY SENTENCES (8-12 words each) that describe what's happening
-   - Add ANNOTATIONS with arrows pointing to important elements
-   - Use CALLOUT BOXES to highlight the 1-2 key events
+   - **ENGAGING SPEECH BUBBLE/CALLOUT**: Include a prominent speech bubble or callout with:
+     * An exciting hook or fun comparison (e.g., "Imagine if YOU could...", "C'est comme si...")
+     * A surprising fact with numbers or comparisons (e.g., "50 FOIS son poids!")
+     * Make the child feel connected to the concept through relatable analogies
+   - **3-5 LABELED COMPONENTS**: Each key concept/object must have:
+     * A numbered title with an engaging name (e.g., "1. L'Armure super solide!")
+     * A 2-3 sentence explanation of what it is, what it does, and why it's amazing
+     * Use exclamation marks and enthusiastic language to keep kids engaged
+   - **DETAILED EXPLANATIONS**: For each major element, provide:
+     * What it is (identification)
+     * What it does (function with a fun comparison)
+     * Why it matters (significance for the process)
+   - **CONCLUDING TAKEAWAY**: A final message box at the bottom with:
+     * An inspiring or memorable lesson from this step
+     * A rhetorical question to make kids think (e.g., "Quelle leçon de vie, n'est-ce pas?")
    - All text must be large enough for 8-10 year olds to read easily
-   - Text should answer: "What is this?", "What's happening here?", and "Why is this important?"
+   - Text should answer: "What is this?", "What's happening here?", "Why is this amazing?", and "What can we learn?"
 
 2. **Maintain Visual Consistency with Previous Steps** (CRITICAL for sequence coherence):
    - Use the EXACT same color palette established in previous steps (specify which colors represent which concepts)
@@ -408,15 +429,20 @@ Following these guidelines:
 
 ## **Specifics**
 
-**TEXT CONTENT REQUIREMENTS** (Critical for Educational Value):
-- The infographic MUST contain visible, readable text elements including:
-  * Step title and step number badge
-  * 2-4 labels identifying key objects or areas
-  * 3-4 complete explanatory sentences (not just titles - actual kid-friendly explanations)
-  * Callouts or annotations for the key events
-- Text hierarchy: Title (largest) → Explanatory sentences (medium) → Labels (smaller)
+**RICH TEXT CONTENT REQUIREMENTS** (Critical for Educational Value - Like the best science infographics):
+- The infographic MUST contain ABUNDANT, ENGAGING text elements including:
+  * Step title (engaging and curiosity-sparking) and step number badge
+  * **ENGAGING SPEECH BUBBLE** with a hook, fun fact, or relatable comparison
+  * **3-5 LABELED SECTIONS** - Each with a catchy title AND 2-3 sentence explanation
+  * **CONCLUDING MESSAGE** at the bottom with a memorable takeaway or life lesson
+  * Callouts with arrows pointing to key transformations
+- Text hierarchy: Title (largest) → Speech bubble (prominent) → Section titles (bold) → Explanations (detailed) → Labels (smaller)
+- Use ENTHUSIASTIC language with exclamation marks to engage young learners
+- Include specific numbers, comparisons, and analogies (e.g., "C'est comme si TOI tu portais 50 autres enfants!")
+- Make concepts RELATABLE by connecting to kids' experiences
+- Ask rhetorical questions to spark curiosity (e.g., "Impressionnant, non?")
 - All text must be in simple language appropriate for 8-10 year olds
-- Avoid scientific jargon unless it's explained in the annotation
+- Avoid scientific jargon unless it's explained with a fun analogy
 
 **NO DUPLICATE CONTENT** (CRITICAL - Avoid Repetition):
 - **Within this image**: Each label, annotation, and text element must be UNIQUE
@@ -533,3 +559,76 @@ Return a JSON object with:
 - Ensure strictly ONE correct answer per question
 - **IMPORTANT: All output (questions, answers, explanations) must be in {{LANGUAGE}}**
 `;
+
+export const VISUAL_WORKSHEET_PROMPT = `
+#Role
+You are an expert educational worksheet designer creating a text-focused quiz worksheet image.
+
+#Task
+Design a detailed prompt for an image generator to create a TEXT-HEAVY educational worksheet with 10 questions. This will be a SINGLE IMAGE that can be printed or used as a study tool. The focus is on READABLE TEXT with minimal illustrations.
+
+**Content to base questions on:**
+{{FACTS}}
+
+#Output Format
+Return a DETAILED text description for an image generator that specifies:
+
+1. **LAYOUT**: Vertical worksheet format (4:5 aspect ratio). Clean, organized structure:
+   - Top: Title banner with topic name
+   - Main area: 10 questions listed vertically, one under another
+   - Each question has a number (1-10) and clear formatting
+   - Bottom: Answer key section (small text, can be upside-down)
+
+2. **QUESTION TYPES** (Mix these for variety - EXACTLY 10 questions total):
+   - **3-4 Fill-in-the-blank questions**: A sentence with a missing word marked by "______" 
+     Example: "Les fourmis peuvent soulever jusqu'à ______ fois leur poids."
+   - **3-4 True or False questions**: Clear statements marked "VRAI ou FAUX?"
+     Example: "VRAI ou FAUX? Les fourmis ont deux estomacs."
+   - **2-3 Multiple choice questions**: Short question with 3 options (A, B, C)
+     Example: "Combien de pattes a une fourmi? A) 4  B) 6  C) 8"
+
+3. **VISUAL STYLE**: {{VISUAL_STYLE}}
+   - CLEAN, MINIMALIST design - prioritize readability over decoration
+   - Light background (white, cream, or very light pastel)
+   - Clear visual separation between questions (lines, spacing, or subtle boxes)
+   - Professional educational worksheet aesthetic
+   - Very few illustrations (1-2 small icons maximum, related to topic)
+
+4. **TEXT FORMATTING** (CRITICAL - Maximum readability):
+   - Title: Large, bold font at the top
+   - Questions: Medium-sized, clear font, numbered 1-10
+   - Each question on its own line with space for answers
+   - Fill-in-the-blank: Show blank line "______" clearly
+   - True/False: Mark clearly with "VRAI ou FAUX?"
+   - Multiple choice: Options aligned (A, B, C format)
+   - Answer key: Small text at bottom, possibly upside-down
+
+5. **MINIMAL DECORATIONS**:
+   - Simple border or frame around the worksheet
+   - Optional: 1-2 small themed icons (not required)
+   - Focus on clean typography, not illustrations
+   - White space between questions for readability
+
+#Critical Requirements
+- EXACTLY 10 QUESTIONS total
+- ALL TEXT MUST BE PERFECTLY LEGIBLE - this is a worksheet, not an infographic
+- Questions should be SHORT and CLEAR (8-15 words maximum)
+- Use HIGH CONTRAST (dark text on light background)
+- Include a MIX of question types (fill-in-blank, true/false, multiple choice)
+- Design for PRINT quality - clean and professional
+- Answers in the answer key must match the questions exactly
+- Target audience: {{TARGET_AUDIENCE}}
+- **IMPORTANT: All text content must be in {{LANGUAGE}}**
+
+#Example Structure
+"A clean educational worksheet titled 'QUIZ : LES FOURMIS' at the top.
+Questions listed vertically:
+1. Les fourmis peuvent porter ______ fois leur poids. (fill-in-blank)
+2. VRAI ou FAUX? Les fourmis communiquent par des sons. (true/false)
+3. Combien de pattes a une fourmi? A) 4 B) 6 C) 8 (multiple choice)
+4. Une colonie de fourmis s'appelle une ______. (fill-in-blank)
+5. VRAI ou FAUX? Les fourmis ont deux estomacs. (true/false)
+... (continue to 10 questions)
+Bottom: Answer key in small upside-down text"
+`;
+

@@ -140,7 +140,7 @@ The gallery data is transformed from InstantDB's object format into an `Infograp
 
 **Base64 Handling**: The `ensureBase64()` helper normalizes images to base64 format (handles both URLs and data URIs).
 
-**Timeout Handling**: Process sequence image generation uses a 120-second timeout (vs. 60s for single images) due to the sequential nature requiring more time per step.
+**Timeout Handling**: Image generation uses a 120-second timeout (increased from 60s) to handle slower model response times for both single images and sequences.
 
 ### Component Structure
 
@@ -317,10 +317,11 @@ A `VisualStyleDNA` object containing:
 Process sequence images include extensive educational text for 8-10 year olds:
 - **Title**: Step title prominently displayed with consistent styling
 - **Step Badge**: "STEP X/Y" indicator with consistent design across all steps
-- **Labels (3-5)**: Identify key objects, areas, or components
-- **Explanations (4-5 sentences)**: Kid-friendly explanations (8-12 words each)
+- **Engaging Speech Bubbles**: Prominent callouts with fun comparisons ("C'est comme si...") or surprising facts
+- **Labeled Components (3-5)**: Numbered titles with engaging names + 2-3 sentence explanations
+- **Detailed Explanations**: Enthusiastic kid-friendly language explaining what it is, what it does, and why it matters
+- **Concluding Takeaway**: A final message box with an inspiring lesson or rhetorical question
 - **Annotations**: Arrows pointing to important elements
-- **Callout Boxes**: Highlight 2-3 key events
 
 ### Content Deduplication Rules
 
@@ -409,6 +410,25 @@ Both research functions handle Perplexity API responses that may be wrapped in m
 - Falls back to finding first `{` and last `}` for malformed responses
 - Gracefully degradates to empty data on parse failure
  
+ 
+ ## Visual Worksheet Mode (Static Quiz)
+ 
+ A feature to generate printable educational worksheets/posters from a folder of facts.
+ 
+ ### Overview
+ - **Goal**: Create a single, high-quality image containing a 10-question quiz based on facts in a folder.
+ - **Format**: Vertical image (4:5 Aspect Ratio), clean minimalist design.
+ - **Content**:
+   - **10 Questions** arranged vertically.
+   - Mix of types: Fill-in-the-blank, True/False, Multiple Choice.
+   - Text-heavy focus with minimal illustrations (icons).
+   - Answer key at the bottom.
+ - **Generation**:
+   - `handleCreateVisualQuiz` aggregates facts from the folder.
+   - Uses `VISUAL_WORKSHEET_PROMPT` to generate a detailed plan.
+   - Uses `gemini-3-pro-image-preview` for high-quality text rendering.
+ - **Storage**: Saved as a standard `InfographicItem` with specific tags (`["worksheet", "static-quiz"]`) and metadata.
+
  ## Quiz Feature with Interactive Mode
  
  An interactive feature allowing users to test their knowledge based on generated infographics.

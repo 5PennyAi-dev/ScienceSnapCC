@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, Plus, Trash2, FolderOpen, Edit2, Check, X, Gamepad2 } from 'lucide-react';
+import { Folder, Plus, Trash2, FolderOpen, Check, X } from 'lucide-react';
 import { Folder as FolderType } from '../types';
 
 interface FolderListProps {
@@ -9,7 +9,6 @@ interface FolderListProps {
   onCreateFolder: (name: string) => void;
   onDeleteFolder: (folderId: string) => void;
   onDropItem: (folderId: string, itemId: string) => void;
-  onCreateQuiz?: (folderId: string) => void;
   draggedItemId?: string | null;
 }
 
@@ -20,7 +19,6 @@ export const FolderList: React.FC<FolderListProps> = ({
   onCreateFolder,
   onDeleteFolder,
   onDropItem,
-  onCreateQuiz,
   draggedItemId
 }) => {
   const [isCreating, setIsCreating] = useState(false);
@@ -130,20 +128,6 @@ export const FolderList: React.FC<FolderListProps> = ({
             </div>
             
             <div className="flex items-center gap-1">
-              {/* Validation: Only show quiz button if this is the selected folder */}
-              {selectedFolderId === folder.id && onCreateQuiz && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateQuiz(folder.id);
-                  }}
-                  className="p-1 text-violet-500 hover:bg-violet-100 hover:text-violet-700 rounded transition-all mr-2"
-                  title="Create Quiz from this folder"
-                >
-                  <Gamepad2 className="w-3 h-3" />
-                </button>
-              )}
-
               <button
                 onClick={(e) => {
                   e.stopPropagation();

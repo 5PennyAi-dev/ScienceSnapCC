@@ -229,6 +229,18 @@ export const researchProcessForEducation = async (
         console.log('[Perplexity Research] Extracted JSON object from response');
       }
 
+      // SANITIZE: Remove markdown formatting that can break JSON parsing
+      // - Remove **bold** markers
+      // - Remove *italic* markers  
+      // - Remove `code` markers
+      // This must be done carefully to not break the JSON structure
+      jsonString = jsonString
+        .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove **bold**
+        .replace(/\*([^*]+)\*/g, '$1')      // Remove *italic*
+        .replace(/`([^`]+)`/g, '$1');       // Remove `code`
+      
+      console.log('[Perplexity Research] Sanitized markdown formatting from JSON');
+
       researchData = JSON.parse(jsonString);
       console.log('[Perplexity Research] ✓ Successfully parsed research data');
     } catch (parseError) {
@@ -237,6 +249,7 @@ export const researchProcessForEducation = async (
       console.warn('Response was:', responseContent.substring(0, 300));
       researchData = {};
     }
+
 
     // Extract citations if available
     const citations: string[] = [];
@@ -377,6 +390,14 @@ export const researchFactForInfographic = async (
       if (jsonObjectMatch) {
         jsonString = jsonObjectMatch[0];
       }
+
+      // SANITIZE: Remove markdown formatting that can break JSON parsing
+      jsonString = jsonString
+        .replace(/\*\*([^*]+)\*\*/g, '$1')  // Remove **bold**
+        .replace(/\*([^*]+)\*/g, '$1')      // Remove *italic*
+        .replace(/`([^`]+)`/g, '$1');       // Remove `code`
+      
+      console.log('[Perplexity Fact Research] Sanitized markdown formatting from JSON');
 
       researchData = JSON.parse(jsonString);
       console.log('[Perplexity Fact Research] Successfully parsed research data:', researchData);

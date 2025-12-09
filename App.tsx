@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppState, ScientificFact, InfographicItem, Language, AIStudio, Audience, ImageModelType, AspectRatio, ArtStyle, InfographicStep, SearchMode, FactResearchData, PerplexityResearchData, Folder } from './types';
-import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, generateVisualStyleDNA, generateQuizFromFacts, ConceptSuggestion, ProcessSuggestion, QuizData } from './services/geminiService';
+import { generateScientificFacts, generateInfographicPlan, generateInfographicImage, generateFactFromConcept, generateProcessStructure, generateStepExplanation, generateStepInfographicPlan, generateConceptSuggestions, generateProcessSuggestions, generateVisualStyleDNA, generateQuizFromFacts, generateVisualQuizPrompt, ConceptSuggestion, ProcessSuggestion, QuizData } from './services/geminiService';
 import { researchFactForInfographic, researchProcessForEducation } from './services/perplexityService';
 import { uploadImageToStorage } from './services/imageUploadService';
 import { FactCard } from './components/FactCard';
@@ -16,7 +16,7 @@ import { ProcessSelector } from './components/ProcessSelector';
 import { FolderList } from './components/FolderList';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
-import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle, X, Palette, FileDigit, Box, Tent, Droplet, Cpu, Coffee } from 'lucide-react';
+import { Atom, ArrowRight, BookOpen, Loader2, Sparkles, Image as ImageIcon, ArrowLeft, Key, Lightbulb, Filter, Search, Grid3X3, Terminal, Rocket, Star, GraduationCap, Baby, Zap, Square, RectangleVertical, RectangleHorizontal, Smartphone, AlertCircle, XCircle, X, Palette, FileDigit, Box, Tent, Droplet, Cpu, Coffee, Gamepad2, FileText } from 'lucide-react';
 import { db } from './db';
 import { tx, id } from "@instantdb/react";
 import { getTranslation } from './translations';
@@ -776,6 +776,85 @@ const App: React.FC = () => {
     }
   };
 
+  // Generate a Visual Worksheet (static quiz poster) from folder items
+  const handleCreateVisualQuiz = async (folderId: string) => {
+    setLoading(true);
+    setLoadingMessage("Creating visual worksheet...");
+    try {
+        // Get all items in the folder with facts
+        const folderItems = gallery.filter(item => item.folderId === folderId && item.fact);
+        if (folderItems.length === 0) {
+            throw new Error("Folder is empty or contains no facts to create a worksheet from.");
+        }
+
+        const facts = folderItems.flatMap(item => {
+            // For sequences, use the content of the steps as facts
+            if (item.isSequence && item.steps && item.steps.length > 0) {
+                return item.steps.map(step => ({
+                    domain: item.fact.domain,
+                    title: `${item.fact.title} - Step ${step.stepNumber}: ${step.title}`,
+                    text: step.description
+                }));
+            }
+            // For single items, use the main fact
+            return [item.fact];
+        });
+
+        // Step 1: Generate visual worksheet prompt using text model
+        setLoadingMessage("Designing worksheet layout...");
+        const worksheetPrompt = await generateVisualQuizPrompt(facts, language, audience, artStyle);
+        console.log('[Visual Worksheet] Prompt generated:', worksheetPrompt.substring(0, 200) + '...');
+
+        // Step 2: Generate the worksheet image using image model (4:5 aspect ratio for worksheet)
+        setLoadingMessage("Rendering worksheet image...");
+        const worksheetImage = await generateInfographicImage(
+            worksheetPrompt, 
+            IMAGE_MODEL_PRO,  // Use Pro for better text rendering
+            AspectRatio.INSTAGRAM, // 4:5 for worksheet format
+            artStyle
+        );
+        const uploadedImageUrl = await uploadImageToStorage(worksheetImage, `worksheet-${Date.now()}.png`);
+
+        // Step 3: Save as standard infographic (not quiz)
+        const newItemId = id();
+        const selectedFolder = folders.find(f => f.id === folderId);
+        const worksheetData = {
+            id: newItemId,
+            timestamp: Date.now(),
+            folderId: folderId,
+            isQuiz: false, // NOT an interactive quiz
+            imageUrl: uploadedImageUrl,
+            plan: worksheetPrompt,
+            // Metadata
+            aspectRatio: AspectRatio.INSTAGRAM,
+            style: artStyle,
+            audience: audience,
+            modelName: IMAGE_MODEL_PRO,
+            language: language,
+            // Fact data
+            title: `Visual Quiz: ${selectedFolder?.name || 'Worksheet'}`,
+            domain: "Visual Quiz",
+            text: `Visual worksheet based on ${facts.length} facts`,
+            fact: {
+                domain: "Visual Quiz",
+                title: `Visual Quiz: ${selectedFolder?.name || 'Worksheet'}`,
+                text: `Visual worksheet based on ${facts.length} facts`
+            },
+            tags: ["worksheet", "static-quiz"]
+        };
+
+        console.log('SAVING VISUAL WORKSHEET:', worksheetData);
+        await db.transact(db.tx.infographics[newItemId].update(worksheetData));
+        setAppState('gallery');
+
+    } catch (e: any) {
+        console.error("Visual worksheet creation failed:", e);
+        setError(e.message);
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const handleCreateFolder = async (name: string) => {
     const newFolderId = id();
     await db.transact(db.tx.folders[newFolderId].update({
@@ -1365,7 +1444,6 @@ const App: React.FC = () => {
                             onCreateFolder={handleCreateFolder}
                             onDeleteFolder={handleDeleteFolder}
                             onDropItem={handleDropItem}
-                            onCreateQuiz={handleCreateQuiz}
                             draggedItemId={draggedItemId}
                         />
                     </div>
@@ -1373,6 +1451,53 @@ const App: React.FC = () => {
 
                 {/* Main Content - Grid & Filters */}
                 <div className="flex-1">
+                    {/* Folder Dashboard - Only visible when a folder is selected */}
+                    {selectedFolderId && (() => {
+                        const currentFolder = folders.find(f => f.id === selectedFolderId);
+                        const folderItemCount = filteredGallery.length;
+                        return (
+                            <div className="bg-gradient-to-r from-violet-50 to-cyan-50 border-2 border-violet-200 rounded-xl p-4 mb-4 shadow-lg">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    {/* Folder Info */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                                            <BookOpen className="w-6 h-6 text-violet-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800">{currentFolder?.name}</h3>
+                                            <p className="text-sm text-gray-500">{folderItemCount} items</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Quiz Actions */}
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-gray-500 mr-2">Create Quiz:</span>
+                                        
+                                        {/* Interactive Quiz Button */}
+                                        <button
+                                            onClick={() => handleCreateQuiz(selectedFolderId)}
+                                            className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg"
+                                            title="Create an interactive playable quiz"
+                                        >
+                                            <Gamepad2 className="w-4 h-4" />
+                                            <span>Playable Quiz</span>
+                                        </button>
+
+                                        {/* Visual Worksheet Button */}
+                                        <button
+                                            onClick={() => handleCreateVisualQuiz(selectedFolderId)}
+                                            className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg"
+                                            title="Create a printable visual worksheet"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            <span>Visual Worksheet</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
                     {/* Filter Toolbar */}
                     <div className="bg-white border-2 border-cyan-200 rounded-xl p-3 flex flex-col md:flex-row gap-3 shadow-lg mb-6">
                         {/* Search Input */}
